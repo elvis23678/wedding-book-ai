@@ -255,6 +255,8 @@ input:focus,select:focus{border-color:var(--gold2)}
   text-transform:uppercase;
 }
 
+
+.logo-print{filter:contrast(1.08) brightness(.88);}
 </style>
 </head>
 <body>
@@ -771,6 +773,7 @@ function downloadQuotePdf(){
     if(logoImage && logoImage.complete && logoImage.naturalWidth){
       try{
         doc.addImage(logoImage,"PNG",73,13,64,35,undefined,"FAST");
+  // logo intentionally darker in source asset if available
       }catch(error){}
     }
 
@@ -857,7 +860,7 @@ function downloadQuotePdf(){
   doc.setFont("helvetica","normal");
   doc.setFontSize(6.5);
   doc.setTextColor(...muted);
-  doc.text("Documento originale",170,81,{align:"center"});
+  doc.text("Documento originale\nQR predisposto CRM",170,81,{align:"center"});
   doc.text("Generato automaticamente",170,86,{align:"center"});
 
   doc.setFont("times","normal");
@@ -994,11 +997,11 @@ function downloadQuotePdf(){
   // Studio signature: compact and safely above footer
   doc.setTextColor(...muted);
   doc.setFontSize(7.5);
-  doc.text("Per Wedding Tattoo Experience",178,250.5,{align:"right"});
+  doc.text("Per Wedding Tattoo Experience",178,252.5,{align:"right"});
 
   if(signatureImage && signatureImage.complete){
     try{
-      doc.addImage(signatureImage,"PNG",117,249,61,18,undefined,"FAST");
+      doc.addImage(signatureImage,"PNG",117,251,61,18,undefined,"FAST");
     }catch(error){}
   }
 
