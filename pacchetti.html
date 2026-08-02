@@ -195,9 +195,17 @@ input:focus,select:focus{border-color:var(--gold2)}
   color:#b8ad99;
   font-size:14px;
 }
+.signature-subtitle{
+  position:relative;
+  margin:-8px 0 18px;
+  color:#948a79;
+  font-size:10px;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
 .signature-image{
   display:block;
-  width:min(270px,72%);
+  width:min(250px,68%);
   height:auto;
   margin:2px 0 0 auto;
   filter:invert(83%) sepia(43%) saturate(725%) hue-rotate(357deg) brightness(102%) contrast(90%);
@@ -217,6 +225,8 @@ input:focus,select:focus{border-color:var(--gold2)}
   line-height:1.45!important;
   text-align:right;
 }
+.signature-letter strong{color:var(--gold2);font-weight:800}
+
 @keyframes letterFade{
   from{opacity:0;transform:translateY(8px)}
   to{opacity:1;transform:none}
@@ -329,11 +339,12 @@ input:focus,select:focus{border-color:var(--gold2)}
     </div>
 
     <section class="signature-letter">
-      <h3>Il consiglio di Elvis</h3>
+      <h3>Il mio consiglio personale</h3>
+      <div class="signature-subtitle">Elvis Billeci · Founder Wedding Tattoo Experience</div>
       <p id="personalAdvice"></p>
       <div class="signature-closing">
         <small>Con stima,</small>
-        <img class="signature-image" id="signatureImage" src="firma-elvis.png" alt="Firma Elvis Billeci">
+        <img class="signature-image" id="signatureImage" src="firma-elvis-pulita.png" alt="Firma Elvis Billeci">
         <div class="signature-role">Founder · Wedding Tattoo Experience</div>
         <p class="signature-disclaimer">Consiglio elaborato sulla base dei dati inseriti e dei criteri Wedding Tattoo Experience.</p>
       </div>
@@ -368,8 +379,8 @@ input:focus,select:focus{border-color:var(--gold2)}
   const pick = (items) => items[Math.floor(Math.random() * items.length)];
 
   const openings = [
-    "Ho analizzato con attenzione i dati del vostro matrimonio.",
-    "Mi sono preso qualche secondo per confrontare tutti gli elementi dell’evento.",
+    "La prima cosa che noto, guardando i dati del vostro matrimonio, è l’equilibrio tra richieste, ore e distanza.",
+    "C’è un dettaglio che ha pesato più degli altri nella scelta del pacchetto.",
     "Dalla simulazione emergono alcuni aspetti importanti.",
     "Guardando insieme invitati, distanza e ore necessarie, il quadro è abbastanza chiaro.",
     "Ho confrontato i tre pacchetti come farei durante una consulenza in studio."
@@ -448,10 +459,10 @@ input:focus,select:focus{border-color:var(--gold2)}
     const parts = [];
 
     if (lower.extraHours > 0) {
-      parts.push(`${lower.name} richiederebbe ${lower.extraHours} ore extra`);
+      parts.push(`sarebbero necessarie ${lower.extraHours} ore extra`);
     }
     if (lower.extraKm > 0) {
-      parts.push(`supererebbe di ${lower.extraKm} km la soglia inclusa`);
+      parts.push(`si supererebbe di ${lower.extraKm} km la soglia inclusa`);
     }
 
     let text = "";
@@ -580,7 +591,17 @@ function recommend(calculated,tattoos,hoursNeeded,km){
 
 
 function formatExpertAdvice(text){
-  const sentences=text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[text];
+  const escaped=String(text)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;");
+
+  const highlighted=escaped
+    .replace(/\b(Essential|Signature|Luxury)\b/g,"<strong>$1</strong>")
+    .replace(/\b(\d+\s*ore?\s*extra)\b/gi,"<strong>$1</strong>")
+    .replace(/\b(\d+\s*€)\b/g,"<strong>$1</strong>");
+
+  const sentences=highlighted.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[highlighted];
   const groups=[];
   let current=[];
 
