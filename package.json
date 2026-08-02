@@ -1,0 +1,13 @@
+{
+  "name": "wedding-tattoo-experience-chat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Wedding Book premium con assistente AI e contatti diretti",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
