@@ -68,6 +68,7 @@
     <div class="contact-head"><strong>Contattaci subito</strong><button class="contact-close" id="contactClose" aria-label="Chiudi">×</button></div>
     <div class="contact-actions">
       <button class="contact-action primary" id="openChat" type="button"><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg><span><strong>Chatta con l’assistente</strong><br><small>Risposte immediate 24/7</small></span></button>
+      <button class="contact-action primary" id="checkAvailability" type="button"><span><strong>📅 Verifica disponibilità</strong><br><small>Richiedi la tua data</small></span></button>
       <a class="contact-action" href="https://wa.me/393477050250?text=Buongiorno%2C%20vorrei%20ricevere%20informazioni%20sul%20servizio%20Wedding%20Tattoo%20Experience." target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M20 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-4.2A8.5 8.5 0 1 1 20 11.5z"/><path d="M8.5 8.5c.5 3 2 4.5 5 5"/></svg>WhatsApp</a>
       <a class="contact-action" href="tel:+39011232456"><svg viewBox="0 0 24 24"><path d="M4 4h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2C9 21 3 15 2 6a2 2 0 0 1 2-2z"/></svg>Chiama</a>
       <a class="contact-action" href="https://www.instagram.com/tattoo.beautycondove/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/></svg>Instagram</a>
@@ -116,9 +117,26 @@ contactFab.onclick=()=>toggleContact();contactClose.onclick=()=>toggleContact(fa
 document.addEventListener('click',e=>{if(contactPanel.classList.contains('open')&&!contactPanel.contains(e.target)&&!contactFab.contains(e.target))toggleContact(false)});
 function appendMessage(text,who,extra=''){const d=document.createElement('div');d.className=`msg ${who} ${extra}`.trim();d.textContent=text;chatMessages.appendChild(d);chatMessages.scrollTop=chatMessages.scrollHeight;return d}
 async function askAssistant(message){appendMessage(message,'user');chatHistory.push({role:'user',content:message});chatInput.value='';chatSend.disabled=true;const typing=appendMessage('Cerco la risposta più adatta…','bot','typing');try{const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,history:chatHistory.slice(-8)})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||'Servizio temporaneamente non disponibile');typing.remove();const reply=data.reply||'Questa richiesta necessita di una conferma del nostro staff.';appendMessage(reply,'bot');chatHistory.push({role:'assistant',content:reply})}catch(err){typing.remove();const d=appendMessage('Non riesco a elaborare la richiesta. Puoi contattarci subito su WhatsApp o telefonicamente.','bot');const h=document.createElement('div');h.className='handoff';h.innerHTML='<a href="https://wa.me/393477050250?text=Buongiorno%2C%20vorrei%20informazioni%20sul%20Wedding%20Tattoo%20Experience." target="_blank" rel="noopener">WhatsApp</a><a href="tel:+39011232456">Chiama</a>';d.appendChild(h)}finally{chatSend.disabled=false;chatInput.focus()}}
+const checkAvailability=document.getElementById('checkAvailability');
+if(checkAvailability){checkAvailability.onclick=()=>{toggleContact(false);alert('Funzione in sviluppo: nella prossima release potrai inviare la richiesta di disponibilità.');};}
 chatForm.addEventListener('submit',e=>{e.preventDefault();const m=chatInput.value.trim();if(m)askAssistant(m)});quickReplies.addEventListener('click',e=>{if(e.target.classList.contains('quick'))askAssistant(e.target.textContent.trim())});
 
 updateUI();})();
 </script>
+
+<style>
+.contact-fab{position:fixed;right:18px;bottom:18px;z-index:9999;background:#111;color:#d4af37;border:1px solid #d4af37;border-radius:999px;padding:12px 18px;font-family:sans-serif;cursor:pointer}
+.contact-panel{display:none;position:fixed;right:18px;bottom:70px;background:#111;color:#fff;border:1px solid #444;border-radius:14px;padding:14px;z-index:10000;width:260px;font-family:sans-serif}
+.contact-panel a{display:block;color:#d4af37;text-decoration:none;padding:8px 0}
+</style>
+<div class="contact-fab" onclick="var p=document.getElementById('contactPanel');p.style.display=p.style.display=='block'?'none':'block'">Contattaci</div>
+<div id="contactPanel" class="contact-panel">
+<b>Wedding Tattoo Experience</b>
+<a href="tel:011232456">📞 011 232456</a>
+<a href="https://wa.me/393477050250?text=Buongiorno,%20vorrei%20informazioni%20sul%20Wedding%20Tattoo%20Experience.">💬 WhatsApp</a>
+<a href="https://instagram.com/tattoo.beautycondove">📷 Instagram</a>
+<a href="https://www.tattoobeautysaloon.it">🌐 Sito Web</a>
+<a href="https://maps.google.com/?q=Via+Torino+1A,+10055+Condove+TO">📍 Google Maps</a>
+</div>
 </body>
 </html>
