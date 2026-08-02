@@ -176,7 +176,29 @@ const openAvailability=document.getElementById('openAvailability'),availabilityM
 function openAvailabilityModal(){toggleContact(false);const today=new Date();today.setMinutes(today.getMinutes()-today.getTimezoneOffset());weddingDate.min=today.toISOString().split('T')[0];availabilityStatus.classList.remove('show');availabilityModal.classList.add('open');availabilityBackdrop.classList.add('open');setTimeout(()=>document.getElementById('coupleNames')?.focus(),180)}
 function closeAvailabilityModal(){availabilityModal.classList.remove('open');availabilityBackdrop.classList.remove('open')}
 openAvailability?.addEventListener('click',openAvailabilityModal);availabilityClose?.addEventListener('click',closeAvailabilityModal);availabilityCancel?.addEventListener('click',closeAvailabilityModal);availabilityBackdrop?.addEventListener('click',closeAvailabilityModal);
-availabilityForm?.addEventListener('submit',e=>{e.preventDefault();if(!availabilityForm.reportValidity())return;const data=new FormData(availabilityForm);const message=['Buongiorno, vorrei verificare la disponibilità per il Wedding Tattoo Experience.','',`Sposi: ${data.get('coupleNames')}`,`Data matrimonio: ${data.get('weddingDate')}`,`Luogo / Location: ${data.get('weddingLocation')}`,`Numero invitati: ${data.get('guestCount')||'Da definire'}`,`Pacchetto: ${data.get('packageChoice')||'Da definire'}`,`Telefono: ${data.get('clientPhone')}`,`Email: ${data.get('clientEmail')||'Non indicata'}`,`Note: ${data.get('requestNotes')||'Nessuna'}`].join('\n');availabilityStatus.classList.add('show');setTimeout(()=>window.open('https://wa.me/393477050250?text='+encodeURIComponent(message),'_blank','noopener'),250)});
+availabilityForm?.addEventListener('submit',e=>{
+e.preventDefault();
+if(!availabilityForm.reportValidity()) return;
+const data=new FormData(availabilityForm);
+const testo=`💍 NUOVA RICHIESTA WEDDING TATTOO EXPERIENCE
+
+👰 Sposi: ${data.get("coupleNames")}
+📅 Data: ${data.get("weddingDate")}
+📍 Luogo: ${data.get("weddingLocation")}
+👥 Invitati: ${data.get("guestCount")||"Da definire"}
+🎁 Pacchetto: ${data.get("packageChoice")||"Da definire"}
+
+📞 Telefono: ${data.get("clientPhone")}
+📧 Email: ${data.get("clientEmail")||"Non indicata"}
+
+📝 Note:
+${data.get("requestNotes")||"Nessuna"}
+
+Grazie! Attendo conferma della disponibilità.`;
+availabilityStatus.classList.add('show');
+window.open("https://wa.me/393477050250?text="+encodeURIComponent(testo),"_blank","noopener");
+availabilityForm.reset();
+});
 
 updateUI();})();
 </script>
