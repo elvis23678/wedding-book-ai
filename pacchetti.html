@@ -256,6 +256,65 @@ input:focus,select:focus{border-color:var(--gold2)}
   color:#9bd7ad;font-size:12px
 }
 
+
+.lead-section{
+  grid-column:1/-1;
+  margin-bottom:4px;
+  padding:16px;
+  border:1px solid rgba(201,154,54,.30);
+  border-radius:18px;
+  background:rgba(201,154,54,.045)
+}
+.lead-title{
+  margin:0 0 12px;
+  color:var(--gold2);
+  font-family:Georgia,serif;
+  font-size:22px
+}
+.lead-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px
+}
+.privacy-box{
+  grid-column:1/-1;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:13px;
+  border:1px solid rgba(201,154,54,.22);
+  border-radius:14px;
+  background:#0b0b09;
+  color:#cbbfae;
+  font-size:12px;
+  line-height:1.5
+}
+.privacy-box input{
+  width:20px;
+  height:20px;
+  flex:0 0 auto;
+  margin-top:1px
+}
+.required-mark{color:#e7c767}
+.lead-error{
+  grid-column:1/-1;
+  min-height:18px;
+  color:#ff9d91;
+  font-size:12px;
+  text-align:center
+}
+.crm-auto-status{
+  grid-column:1/-1;
+  min-height:19px;
+  text-align:center;
+  color:#9bd7ad;
+  font-size:12px;
+  margin-top:3px
+}
+@media(max-width:700px){
+  .lead-grid{grid-template-columns:1fr}
+}
+
 </style>
 </head>
 <body>
@@ -271,10 +330,52 @@ input:focus,select:focus{border-color:var(--gold2)}
 
   <section class="panel">
     <div class="grid">
-      <div class="field">
-        <label for="coupleNames">Nomi degli sposi</label>
-        <input id="coupleNames" placeholder="Es. Marco e Giulia">
-      </div>
+      <section class="lead-section">
+        <h2 class="lead-title">I tuoi dati</h2>
+
+        <div class="lead-grid">
+          <div class="field">
+            <label for="clientFirstName">Nome <span class="required-mark">*</span></label>
+            <input id="clientFirstName" autocomplete="given-name" placeholder="Es. Marco">
+          </div>
+
+          <div class="field">
+            <label for="clientLastName">Cognome <span class="required-mark">*</span></label>
+            <input id="clientLastName" autocomplete="family-name" placeholder="Es. Rossi">
+          </div>
+
+          <div class="field">
+            <label for="clientBirthDate">Data di nascita <span class="required-mark">*</span></label>
+            <input id="clientBirthDate" type="date" autocomplete="bday">
+          </div>
+
+          <div class="field">
+            <label for="clientPhone">Cellulare / WhatsApp <span class="required-mark">*</span></label>
+            <input id="clientPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Es. 347 123 4567">
+          </div>
+
+          <div class="field">
+            <label for="clientEmail">Email</label>
+            <input id="clientEmail" type="email" autocomplete="email" placeholder="Facoltativa">
+          </div>
+
+          <div class="field">
+            <label for="partnerName">Nome del secondo sposo/a</label>
+            <input id="partnerName" placeholder="Facoltativo">
+          </div>
+
+          <label class="privacy-box">
+            <input id="contactConsent" type="checkbox">
+            <span>
+              Acconsento al trattamento dei dati inseriti e autorizzo Wedding Tattoo Experience
+              a contattarmi tramite telefono, WhatsApp o email esclusivamente per la gestione
+              della presente richiesta. <span class="required-mark">*</span>
+            </span>
+          </label>
+
+          <div class="lead-error" id="leadError"></div>
+        </div>
+      </section>
 
       <div class="field">
         <label for="weddingDate">Data del matrimonio</label>
@@ -370,9 +471,7 @@ input:focus,select:focus{border-color:var(--gold2)}
       <div class="action-grid">
         <a class="cta" id="whatsappCta" href="#" target="_blank" rel="noopener">Richiedi questo pacchetto su WhatsApp</a>
         <button class="pdf-btn" id="downloadPdf" type="button">Scarica il preventivo PDF</button>
-        <button class="crm-save-btn" id="saveProposalCrm" type="button">Salva proposta nel CRM</button>
-        <a class="crm-open-link" href="crm-proposte.html">Apri archivio proposte</a>
-        <div class="crm-save-status" id="crmSaveStatus"></div>
+        <div class="crm-auto-status" id="crmAutoStatus"></div>
       </div>
       <p class="warning" id="travelWarning"></p>
     </div>
@@ -1029,7 +1128,15 @@ function downloadQuotePdf(){
 }
 
 function performCalculation(){
-  const names=document.getElementById("coupleNames").value.trim();
+  const firstName=document.getElementById("clientFirstName").value.trim();
+  const lastName=document.getElementById("clientLastName").value.trim();
+  const birthDate=document.getElementById("clientBirthDate").value;
+  const phone=document.getElementById("clientPhone").value.trim();
+  const email=document.getElementById("clientEmail").value.trim();
+  const partnerName=document.getElementById("partnerName").value.trim();
+  const consent=document.getElementById("contactConsent").checked;
+  const primaryName=[firstName,lastName].filter(Boolean).join(" ");
+  const names=partnerName ? `${primaryName} e ${partnerName}` : primaryName;
   const date=document.getElementById("weddingDate").value;
   const startTime=document.getElementById("startTime").value||"17:00";
   const guests=Math.max(1,Number(document.getElementById("guests").value)||1);
@@ -1071,7 +1178,23 @@ function performCalculation(){
   buildTimeline(startTime,tattoos,hoursNeeded);
 
   currentQuote={
-    names,date,startTime,location,km,guests,interest,tattoos,hoursNeeded,recommended,
+    names,
+    firstName,
+    lastName,
+    birthDate,
+    phone,
+    email,
+    partnerName,
+    consent,
+    date,
+    startTime,
+    location,
+    km,
+    guests,
+    interest,
+    tattoos,
+    hoursNeeded,
+    recommended,
     advice:personalAdvice
   };
 
@@ -1191,7 +1314,71 @@ Vorrei ricevere un preventivo definitivo.`;
 const analysisOverlay=document.getElementById("analysisOverlay");
 const analysisSteps=[...document.querySelectorAll(".analysis-step")];
 
+
+function validateLeadData(){
+  const error=document.getElementById("leadError");
+  const firstName=document.getElementById("clientFirstName").value.trim();
+  const lastName=document.getElementById("clientLastName").value.trim();
+  const birthDate=document.getElementById("clientBirthDate").value;
+  const phone=document.getElementById("clientPhone").value.trim();
+  const email=document.getElementById("clientEmail").value.trim();
+  const consent=document.getElementById("contactConsent").checked;
+
+  if(!firstName){
+    error.textContent="Inserisci il nome.";
+    document.getElementById("clientFirstName").focus();
+    return false;
+  }
+  if(!lastName){
+    error.textContent="Inserisci il cognome.";
+    document.getElementById("clientLastName").focus();
+    return false;
+  }
+  if(!birthDate){
+    error.textContent="Inserisci la data di nascita.";
+    document.getElementById("clientBirthDate").focus();
+    return false;
+  }
+
+  const born=new Date(birthDate+"T12:00:00");
+  const today=new Date();
+  let age=today.getFullYear()-born.getFullYear();
+  const birthdayNotPassed=
+    today.getMonth()<born.getMonth() ||
+    (today.getMonth()===born.getMonth() && today.getDate()<born.getDate());
+  if(birthdayNotPassed) age--;
+
+  if(!Number.isFinite(age) || age<18){
+    error.textContent="Il richiedente deve essere maggiorenne.";
+    document.getElementById("clientBirthDate").focus();
+    return false;
+  }
+
+  const phoneDigits=phone.replace(/\D/g,"");
+  if(phoneDigits.length<9){
+    error.textContent="Inserisci un numero di cellulare valido.";
+    document.getElementById("clientPhone").focus();
+    return false;
+  }
+
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    error.textContent="Inserisci un indirizzo email valido oppure lascia il campo vuoto.";
+    document.getElementById("clientEmail").focus();
+    return false;
+  }
+
+  if(!consent){
+    error.textContent="Per proseguire devi autorizzare il contatto per la gestione della richiesta.";
+    document.getElementById("contactConsent").focus();
+    return false;
+  }
+
+  error.textContent="";
+  return true;
+}
+
 async function runAnalysis(){
+  if(!validateLeadData()) return;
   analysisOverlay.classList.add("show");
   analysisOverlay.setAttribute("aria-hidden","false");
   analysisSteps.forEach(step=>step.classList.remove("active","done"));
@@ -1210,6 +1397,7 @@ async function runAnalysis(){
   await new Promise(resolve=>setTimeout(resolve,300));
 
   performCalculation();
+  saveProposalToCrm();
 
   analysisOverlay.classList.remove("show");
   analysisOverlay.setAttribute("aria-hidden","true");
@@ -1252,10 +1440,10 @@ function crmAddHistory(proposal,type,text){
 }
 
 function saveProposalToCrm(){
-  const statusEl=document.getElementById("crmSaveStatus");
+  const statusEl=document.getElementById("crmAutoStatus");
 
   if(!currentQuote){
-    statusEl.textContent="Prima calcola il pacchetto consigliato.";
+    if(statusEl) statusEl.textContent="Impossibile registrare la richiesta.";
     return;
   }
 
@@ -1272,8 +1460,16 @@ function saveProposalToCrm(){
     version:"WTE Proposal v1.0",
     createdAt:previous?.createdAt||now,
     updatedAt:now,
-    status:previous?.status||"Bozza",
-    names:currentQuote.names||"Sposi non indicati",
+    status:previous?.status||"Nuova richiesta",
+    names:currentQuote.names||"Cliente non indicato",
+    firstName:currentQuote.firstName||"",
+    lastName:currentQuote.lastName||"",
+    birthDate:currentQuote.birthDate||"",
+    partnerName:currentQuote.partnerName||"",
+    phone:currentQuote.phone||previous?.phone||"",
+    email:currentQuote.email||previous?.email||"",
+    contactConsent:Boolean(currentQuote.consent),
+    consentAt:previous?.consentAt||(currentQuote.consent?now:""),
     weddingDate:currentQuote.date||"",
     startTime:currentQuote.startTime||"",
     location:currentQuote.location||"",
@@ -1294,8 +1490,6 @@ function saveProposalToCrm(){
     includedHours:Number(currentQuote.recommended.hours)||0,
     includedKm:currentQuote.recommended.includedKm,
     advice:currentQuote.advice||"",
-    phone:previous?.phone||"",
-    email:previous?.email||"",
     notes:previous?.notes||"",
     attachments:previous?.attachments||[],
     history:previous?.history||[]
@@ -1304,7 +1498,7 @@ function saveProposalToCrm(){
   crmAddHistory(
     proposal,
     previous?"update":"create",
-    previous?"Proposta aggiornata dal configuratore.":"Proposta creata e salvata dal configuratore."
+    previous?"Richiesta aggiornata automaticamente dal configuratore.":"Nuova richiesta acquisita automaticamente dal configuratore."
   );
 
   const index=archive.findIndex(item=>item.id===id);
@@ -1314,13 +1508,13 @@ function saveProposalToCrm(){
   crmWrite(archive);
   currentQuote.crmId=id;
 
-  statusEl.textContent=`Salvata: ${id}`;
-  setTimeout(()=>statusEl.textContent="",4500);
+  if(statusEl){
+    statusEl.textContent=`Richiesta registrata con codice ${id}`;
+  }
 }
 
 document.getElementById("calculate").addEventListener("click",runAnalysis);
 document.getElementById("downloadPdf").addEventListener("click",downloadQuotePdf);
-document.getElementById("saveProposalCrm").addEventListener("click",saveProposalToCrm);
 
 </script>
 </div>

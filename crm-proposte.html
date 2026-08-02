@@ -221,6 +221,7 @@ textarea{resize:vertical}
     <input class="control" id="search" type="search" placeholder="Cerca codice, sposi, location, pacchetto…">
     <select class="control" id="statusFilter">
       <option value="">Tutti gli stati</option>
+      <option>Nuova richiesta</option>
       <option>Bozza</option>
       <option>Inviata</option>
       <option>In attesa</option>
@@ -305,6 +306,7 @@ textarea{resize:vertical}
         <div>
           <label>Stato proposta</label>
           <select class="control" id="editStatus">
+            <option>Nuova richiesta</option>
             <option>Bozza</option>
             <option>Inviata</option>
             <option>In attesa</option>
@@ -315,6 +317,10 @@ textarea{resize:vertical}
             <option>Scaduta</option>
             <option>Annullata</option>
           </select>
+        </div>
+        <div>
+          <label>Data di nascita richiedente</label>
+          <input class="control" id="editBirthDate" type="date">
         </div>
         <div>
           <label>Data matrimonio</label>
@@ -359,6 +365,7 @@ textarea{resize:vertical}
           <label>Cambia stato e prepara il messaggio</label>
           <div class="status-change-grid">
             <select class="control" id="whatsappStatus">
+              <option>Nuova richiesta</option>
               <option>Bozza</option>
               <option>Inviata</option>
               <option>In attesa</option>
@@ -403,11 +410,12 @@ textarea{resize:vertical}
 const KEY="wte_crm_proposals_v2";
 let selectedId=null;
 
-const STATUSES=["Bozza","Inviata","In attesa","Accettata","Acconto ricevuto","Confermata","Evento concluso","Scaduta","Annullata"];
+const STATUSES=["Nuova richiesta","Bozza","Inviata","In attesa","Accettata","Acconto ricevuto","Confermata","Evento concluso","Scaduta","Annullata"];
 
 const TEMPLATE_KEY="wte_crm_whatsapp_templates_v1";
 
 const DEFAULT_TEMPLATES={
+  "Nuova richiesta":"Ciao {names}, abbiamo ricevuto la vostra richiesta Wedding Tattoo Experience {id}. La esamineremo e vi contatteremo quanto prima.",
   "Bozza":"Ciao {names}, stiamo preparando la vostra proposta Wedding Tattoo Experience {id}.",
   "Inviata":"Ciao {names}, la vostra proposta Wedding Tattoo Experience {id} è pronta. Il pacchetto consigliato è {package}, per un totale stimato di {total} + IVA. Restiamo a disposizione per qualsiasi chiarimento.",
   "In attesa":"Ciao {names}, per procedere potete firmare la proposta {id} e inviarcela direttamente in questa chat. La data del matrimonio indicata è {weddingDate}.",
@@ -581,6 +589,7 @@ function escapeHtml(value){
 }
 function statusClass(status){
   const map={
+    "Nuova richiesta":"Attesa",
     "Bozza":"Bozza","Inviata":"Inviata","In attesa":"Attesa","Accettata":"Accettata",
     "Acconto ricevuto":"Acconto","Confermata":"Confermata","Evento concluso":"Conclusa",
     "Scaduta":"Scaduta","Annullata":"Annullata"
@@ -633,7 +642,7 @@ function render(){
 
   const accepted=all.filter(x=>["Accettata","Acconto ricevuto","Confermata","Evento concluso"].includes(x.status));
   const open=all.filter(x=>!["Evento concluso","Scaduta","Annullata"].includes(x.status));
-  const closedBase=all.filter(x=>!["Bozza","Scaduta","Annullata"].includes(x.status));
+  const closedBase=all.filter(x=>!["Nuova richiesta","Bozza","Scaduta","Annullata"].includes(x.status));
 
   document.getElementById("mTotal").textContent=all.length;
   document.getElementById("mOpen").textContent=open.length;
@@ -655,6 +664,10 @@ function openProposal(id){
   document.getElementById("sheetId").textContent=item.id+" · "+item.status;
 
   const summary=[
+    ["Richiedente",[item.firstName,item.lastName].filter(Boolean).join(" ")||item.names],
+    ["Data di nascita",date(item.birthDate)],
+    ["Telefono",item.phone||"Non indicato"],
+    ["Consenso contatto",item.contactConsent?"Registrato":"Non registrato"],
     ["Data matrimonio",date(item.weddingDate)],
     ["Location",item.location||"Da definire"],
     ["Pacchetto",item.packageName],
@@ -670,7 +683,8 @@ function openProposal(id){
 
   document.getElementById("editPhone").value=item.phone||"";
   document.getElementById("editEmail").value=item.email||"";
-  document.getElementById("editStatus").value=item.status||"Bozza";
+  document.getElementById("editStatus").value=item.status||"Nuova richiesta";
+  document.getElementById("editBirthDate").value=item.birthDate||"";
   document.getElementById("editWeddingDate").value=item.weddingDate||"";
   document.getElementById("editLocation").value=item.location||"";
   document.getElementById("editNotes").value=item.notes||"";
@@ -717,6 +731,7 @@ function saveCustomer(){
     item.phone=document.getElementById("editPhone").value.trim();
     item.email=document.getElementById("editEmail").value.trim();
     item.status=newStatus;
+    item.birthDate=document.getElementById("editBirthDate").value;
     item.weddingDate=document.getElementById("editWeddingDate").value;
     item.location=document.getElementById("editLocation").value.trim();
     if(oldStatus!==newStatus){
