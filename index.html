@@ -79,6 +79,38 @@ padding:16px 16px 100px;
     @media(max-width:700px){.availability-backdrop{display:none}.availability-modal{left:0;top:0;width:100%;height:100dvh;max-height:none;border-radius:0;border-left:0;border-right:0;border-bottom:0;transform:translateY(18px)}.availability-modal.open{transform:none}.availability-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
 
   
+
+/* Modalità lettura */
+.page-shell{overflow:hidden;touch-action:none}
+#pageImage{
+  transform-origin:center center;
+  will-change:transform;
+  cursor:zoom-in;
+}
+.page-shell.zoomed #pageImage{cursor:grab}
+.page-shell.dragging #pageImage{cursor:grabbing;transition:none!important}
+.zoom-btn{
+  position:absolute;
+  left:max(14px,env(safe-area-inset-left));
+  bottom:calc(72px + var(--safe-bottom));
+  z-index:26;
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  border:1px solid rgba(240,207,117,.62);
+  background:linear-gradient(145deg,rgba(28,22,11,.96),rgba(5,5,5,.96));
+  color:var(--gold2);
+  display:grid;
+  place-items:center;
+  box-shadow:0 14px 38px rgba(0,0,0,.58),0 0 28px rgba(201,154,54,.10);
+  cursor:pointer;
+}
+.zoom-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8}
+.zoom-btn.active{background:var(--gold);color:#111}
+@media(max-width:700px){
+  .zoom-btn{width:46px;height:46px;bottom:calc(66px + var(--safe-bottom))}
+}
+
 </style>
 </head>
 <body>
@@ -131,9 +163,8 @@ padding:16px 16px 100px;
   </section>
 <div class="toast" id="toast"></div>
 
-  <button class="zoom-btn" id="zoomBtn" type="button" aria-label="Attiva modalità lettura">
-    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4M11 8v6M8 11h6"/></svg>
-    <span>Leggi meglio</span>
+  <button class="zoom-btn" id="zoomBtn" type="button" aria-label="Ingrandisci pagina">
+    <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.7-4.7M10.5 7.5v6M7.5 10.5h6"/></svg>
   </button>
 </div>
 <script>
@@ -154,7 +185,7 @@ for(let i=1;i<=TOTAL;i++){const b=document.createElement('button');b.className='
 document.getElementById('enterBtn').onclick=()=>{document.getElementById('splash').classList.add('hidden');entered=true;preload(2);showChrome(true)};
 document.getElementById('fullBtn').onclick=async()=>{try{if(!document.fullscreenElement){await document.documentElement.requestFullscreen();showToast('Schermo intero attivo')}else await document.exitFullscreen()}catch{showToast('Schermo intero non disponibile')}};
 document.addEventListener('keydown',e=>{if(drawer.classList.contains('open')){if(e.key==='Escape')closeDrawer();return}if(e.key==='ArrowRight'||e.key==='PageDown')go(current+1,1);if(e.key==='ArrowLeft'||e.key==='PageUp')go(current-1,-1);if(e.key==='Home')go(1,-1);if(e.key==='End')go(TOTAL,1);if(e.key==='Escape'&&document.fullscreenElement)document.exitFullscreen()});
-const stage=document.getElementById('stage');stage.addEventListener('touchstart',e=>{const t=e.changedTouches[0];startX=t.clientX;startY=t.clientY;deltaX=0},{passive:true});stage.addEventListener('touchmove',e=>{deltaX=e.changedTouches[0].clientX-startX},{passive:true});stage.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-startX,dy=t.clientY-startY;if(zoomScale>1){return}if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.2){go(current+(dx<0?1:-1),dx<0?1:-1)}else if(Math.abs(dx)<12&&Math.abs(dy)<12){toggleChrome()}},{passive:true});stage.addEventListener('click',e=>{if(e.detail===0||zoomScale>1)return;toggleChrome()});
+const stage=document.getElementById('stage');stage.addEventListener('touchstart',e=>{const t=e.changedTouches[0];startX=t.clientX;startY=t.clientY;deltaX=0},{passive:true});stage.addEventListener('touchmove',e=>{deltaX=e.changedTouches[0].clientX-startX},{passive:true});stage.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-startX,dy=t.clientY-startY;if(zoomScale>1)return;if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.2){go(current+(dx<0?1:-1),dx<0?1:-1)}else if(Math.abs(dx)<12&&Math.abs(dy)<12){toggleChrome()}},{passive:true});stage.addEventListener('click',e=>{if(e.detail===0||zoomScale>1)return;toggleChrome()});
 ['homeBtn','menuBtn','fullBtn','prevBtn','nextBtn','prevEdge','nextEdge'].forEach(id=>document.getElementById(id)?.addEventListener('click',()=>showChrome(true)));
 
 // Contatti e assistente guidato
@@ -172,73 +203,69 @@ chatForm.addEventListener('submit',e=>{e.preventDefault();const m=chatInput.valu
 
 
 
-// Zoom lettura: doppio tocco/click, trascinamento e pulsante dedicato.
+// Modalità lettura
 const pageShell=document.querySelector('.page-shell');
 const zoomBtn=document.getElementById('zoomBtn');
-let zoomScale=1, panX=0, panY=0, zoomDragging=false, dragStartX=0, dragStartY=0, panStartX=0, panStartY=0, lastTapTime=0;
+let zoomScale=1,zoomX=0,zoomY=0,zoomDragging=false,zoomStartX=0,zoomStartY=0,zoomBaseX=0,zoomBaseY=0,lastZoomTap=0;
 
-function applyZoom(){
-  img.style.transform=`translate3d(${panX}px,${panY}px,0) scale(${zoomScale})`;
+function renderZoom(){
+  img.style.transform=`translate3d(${zoomX}px,${zoomY}px,0) scale(${zoomScale})`;
   pageShell.classList.toggle('zoomed',zoomScale>1);
-  zoomBtn?.setAttribute('aria-label',zoomScale>1?'Disattiva modalità lettura':'Attiva modalità lettura');
+  zoomBtn.classList.toggle('active',zoomScale>1);
 }
 function resetZoom(){
-  zoomScale=1;panX=0;panY=0;
+  zoomScale=1;zoomX=0;zoomY=0;zoomDragging=false;
   pageShell.classList.remove('dragging');
-  applyZoom();
+  renderZoom();
 }
-function toggleZoomAt(clientX,clientY){
+function toggleZoom(clientX,clientY){
   if(zoomScale>1){resetZoom();return}
-  const r=img.getBoundingClientRect();
-  const localX=clientX-r.left-r.width/2;
-  const localY=clientY-r.top-r.height/2;
+  const rect=img.getBoundingClientRect();
   zoomScale=2;
-  panX=Math.max(-r.width*.35,Math.min(r.width*.35,-localX*.65));
-  panY=Math.max(-r.height*.35,Math.min(r.height*.35,-localY*.65));
-  applyZoom();
+  const dx=clientX-(rect.left+rect.width/2);
+  const dy=clientY-(rect.top+rect.height/2);
+  zoomX=Math.max(-rect.width*.35,Math.min(rect.width*.35,-dx*.65));
+  zoomY=Math.max(-rect.height*.35,Math.min(rect.height*.35,-dy*.65));
+  renderZoom();
 }
-zoomBtn?.addEventListener('click',e=>{
-  e.stopPropagation();
-  const r=img.getBoundingClientRect();
-  toggleZoomAt(r.left+r.width/2,r.top+r.height/2);
+zoomBtn.addEventListener('click',e=>{
+  e.preventDefault();e.stopPropagation();
+  const rect=img.getBoundingClientRect();
+  toggleZoom(rect.left+rect.width/2,rect.top+rect.height/2);
 });
-
 pageShell.addEventListener('pointerdown',e=>{
   if(zoomScale<=1)return;
   zoomDragging=true;
-  dragStartX=e.clientX;dragStartY=e.clientY;
-  panStartX=panX;panStartY=panY;
+  zoomStartX=e.clientX;zoomStartY=e.clientY;
+  zoomBaseX=zoomX;zoomBaseY=zoomY;
   pageShell.classList.add('dragging');
   pageShell.setPointerCapture?.(e.pointerId);
 });
 pageShell.addEventListener('pointermove',e=>{
   if(!zoomDragging||zoomScale<=1)return;
-  const r=img.getBoundingClientRect();
-  const maxX=Math.max(40,(r.width*(zoomScale-1))/3);
-  const maxY=Math.max(40,(r.height*(zoomScale-1))/3);
-  panX=Math.max(-maxX,Math.min(maxX,panStartX+(e.clientX-dragStartX)));
-  panY=Math.max(-maxY,Math.min(maxY,panStartY+(e.clientY-dragStartY)));
-  applyZoom();
+  const rect=img.getBoundingClientRect();
+  const maxX=Math.max(80,rect.width*.42);
+  const maxY=Math.max(80,rect.height*.42);
+  zoomX=Math.max(-maxX,Math.min(maxX,zoomBaseX+e.clientX-zoomStartX));
+  zoomY=Math.max(-maxY,Math.min(maxY,zoomBaseY+e.clientY-zoomStartY));
+  renderZoom();
 });
-function endZoomDrag(){zoomDragging=false;pageShell.classList.remove('dragging')}
-pageShell.addEventListener('pointerup',endZoomDrag);
-pageShell.addEventListener('pointercancel',endZoomDrag);
-
+function stopZoomDrag(){zoomDragging=false;pageShell.classList.remove('dragging')}
+pageShell.addEventListener('pointerup',stopZoomDrag);
+pageShell.addEventListener('pointercancel',stopZoomDrag);
 pageShell.addEventListener('dblclick',e=>{
   e.preventDefault();e.stopPropagation();
-  toggleZoomAt(e.clientX,e.clientY);
+  toggleZoom(e.clientX,e.clientY);
 });
 pageShell.addEventListener('touchend',e=>{
   if(e.changedTouches.length!==1)return;
   const now=Date.now();
-  if(now-lastTapTime<320){
+  if(now-lastZoomTap<320){
     e.preventDefault();e.stopPropagation();
     const t=e.changedTouches[0];
-    toggleZoomAt(t.clientX,t.clientY);
-    lastTapTime=0;
-  }else{
-    lastTapTime=now;
-  }
+    toggleZoom(t.clientX,t.clientY);
+    lastZoomTap=0;
+  }else lastZoomTap=now;
 },{passive:false});
 
 updateUI();})();
