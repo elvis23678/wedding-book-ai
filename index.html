@@ -40,28 +40,12 @@
     /* Verifica disponibilità */
     .availability-backdrop{position:absolute;inset:0;z-index:42;background:rgba(0,0,0,.68);backdrop-filter:blur(9px);opacity:0;visibility:hidden;transition:.25s ease}
     .availability-backdrop.open{opacity:1;visibility:visible}
-    .availability-modal{
-position:fixed;
-inset:0;
-width:100%;
-height:100dvh;
-max-height:100dvh;
-overflow:hidden;
-display:flex;
-flex-direction:column;
-z-index:43;
-background:linear-gradient(180deg,rgba(15,13,9,.995),rgba(3,3,3,.995));
-}
+    .availability-modal{position:absolute;left:50%;top:50%;z-index:43;width:min(520px,calc(100vw - 24px));max-height:min(760px,calc(100dvh - 24px));transform:translate(-50%,-48%) scale(.985);opacity:0;visibility:hidden;display:flex;flex-direction:column;border:1px solid rgba(201,154,54,.40);border-radius:24px;overflow:hidden;background:linear-gradient(180deg,rgba(15,13,9,.995),rgba(3,3,3,.995));box-shadow:0 30px 100px rgba(0,0,0,.88);transition:.26s ease}
     .availability-modal.open{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
     .availability-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 14px;border-bottom:1px solid rgba(201,154,54,.18)}
     .availability-head strong{font-family:Georgia,serif;color:var(--gold2);font-size:20px;font-weight:400}
     .availability-close{width:38px;height:38px;border-radius:50%;border:1px solid rgba(201,154,54,.28);background:transparent;color:var(--gold2);font-size:22px;cursor:pointer}
-    .availability-body{
-flex:1;
-overflow-y:auto;
--webkit-overflow-scrolling:touch;
-padding:16px 16px 100px;
-}
+    .availability-body{overflow:auto;padding:16px}
     .availability-intro{margin:0 0 14px;color:#cfc5b3;font-size:13px;line-height:1.5}
     .availability-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
     .field{display:flex;flex-direction:column;gap:6px}
@@ -78,8 +62,7 @@ padding:16px 16px 100px;
     .availability-status.show{display:block}
     @media(max-width:700px){.availability-backdrop{display:none}.availability-modal{left:0;top:0;width:100%;height:100dvh;max-height:none;border-radius:0;border-left:0;border-right:0;border-bottom:0;transform:translateY(18px)}.availability-modal.open{transform:none}.availability-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
 
-  body.modal-open{overflow:hidden;touch-action:none;}
-</style>
+  </style>
 </head>
 <body>
 <div class="app" id="app">
@@ -131,24 +114,29 @@ padding:16px 16px 100px;
   </section>
 
 
-  
-<section id="availabilityModal" style="display:none;position:fixed;inset:0;background:#050505;z-index:9999;overflow:auto;padding:20px;color:#fff">
-<div style="max-width:600px;margin:0 auto;padding-bottom:80px">
-<h2 style="color:#f0cf75">Verifica disponibilità</h2>
-<button id="availabilityClose" type="button" style="float:right">✕</button>
-<form id="availabilityForm">
-<p><input id="coupleNames" name="coupleNames" placeholder="Nomi degli sposi" required style="width:100%;padding:12px;margin:8px 0"></p>
-<p><input id="weddingDate" name="weddingDate" type="date" required style="width:100%;padding:12px;margin:8px 0"></p>
-<p><input id="weddingLocation" name="weddingLocation" placeholder="Location" required style="width:100%;padding:12px;margin:8px 0"></p>
-<p><input id="guestCount" name="guestCount" placeholder="Invitati" style="width:100%;padding:12px;margin:8px 0"></p>
-<p><input id="clientPhone" name="clientPhone" placeholder="Telefono" required style="width:100%;padding:12px;margin:8px 0"></p>
-<p><input id="clientEmail" name="clientEmail" placeholder="Email" style="width:100%;padding:12px;margin:8px 0"></p>
-<p><textarea id="requestNotes" name="requestNotes" placeholder="Note" style="width:100%;min-height:120px;padding:12px"></textarea></p>
-<button type="submit" style="width:100%;padding:15px;background:#c99a36;color:#111;border:0">Invia richiesta su WhatsApp</button>
-</form>
-</div>
-</section>
-<div class="toast" id="toast"></div>
+  <div class="availability-backdrop" id="availabilityBackdrop"></div>
+  <section class="availability-modal" id="availabilityModal" role="dialog" aria-modal="true" aria-label="Verifica disponibilità data">
+    <header class="availability-head"><strong>Verifica disponibilità</strong><button class="availability-close" id="availabilityClose" type="button" aria-label="Chiudi">×</button></header>
+    <form id="availabilityForm">
+      <div class="availability-body">
+        <p class="availability-intro">Compila i dati essenziali. La richiesta verrà preparata automaticamente e inviata al nostro staff tramite WhatsApp.</p>
+        <div class="availability-grid">
+          <div class="field"><label for="coupleNames">Nomi degli sposi *</label><input id="coupleNames" name="coupleNames" required maxlength="100" placeholder="Es. Marco e Giulia"></div>
+          <div class="field"><label for="weddingDate">Data matrimonio *</label><input id="weddingDate" name="weddingDate" type="date" required></div>
+          <div class="field full"><label for="weddingLocation">Luogo / Location *</label><input id="weddingLocation" name="weddingLocation" required maxlength="160" placeholder="Es. Torino, Villa..."></div>
+          <div class="field"><label for="guestCount">Numero invitati</label><input id="guestCount" name="guestCount" type="number" min="1" max="1000" inputmode="numeric" placeholder="Es. 120"></div>
+          <div class="field"><label for="packageChoice">Pacchetto</label><select id="packageChoice" name="packageChoice"><option value="Da definire">Da definire</option><option value="Bronze — 790 € + IVA">Bronze — 790 € + IVA</option><option value="Silver — 1090 € + IVA">Silver — 1090 € + IVA</option><option value="Gold — 1690 € + IVA">Gold — 1690 € + IVA</option></select></div>
+          <div class="field"><label for="clientPhone">Telefono *</label><input id="clientPhone" name="clientPhone" type="tel" required maxlength="30" inputmode="tel" placeholder="Es. 347..."></div>
+          <div class="field"><label for="clientEmail">Email</label><input id="clientEmail" name="clientEmail" type="email" maxlength="120" placeholder="nome@email.it"></div>
+          <div class="field full"><label for="requestNotes">Note</label><textarea id="requestNotes" name="requestNotes" maxlength="600" placeholder="Orari, richieste particolari, informazioni utili..."></textarea></div>
+        </div>
+        <div class="availability-status" id="availabilityStatus">Richiesta pronta. Si aprirà WhatsApp con tutti i dati compilati.</div>
+      </div>
+      <div class="availability-actions"><button class="availability-cancel" id="availabilityCancel" type="button">Annulla</button><button class="availability-submit" type="submit">Invia richiesta</button></div>
+    </form>
+  </section>
+
+  <div class="toast" id="toast"></div>
 </div>
 <script>
 (()=>{'use strict';
@@ -185,25 +173,11 @@ chatForm.addEventListener('submit',e=>{e.preventDefault();const m=chatInput.valu
 
 
 const openAvailability=document.getElementById('openAvailability'),availabilityModal=document.getElementById('availabilityModal'),availabilityBackdrop=document.getElementById('availabilityBackdrop'),availabilityClose=document.getElementById('availabilityClose'),availabilityCancel=document.getElementById('availabilityCancel'),availabilityForm=document.getElementById('availabilityForm'),availabilityStatus=document.getElementById('availabilityStatus'),weddingDate=document.getElementById('weddingDate');
-function openAvailabilityModal(){document.getElementById('availabilityModal').style.display='block';document.body.style.overflow='hidden';}
-function closeAvailabilityModal(){document.getElementById('availabilityModal').style.display='none';document.body.style.overflow='';}
-(){document.body.classList.remove('modal-open');
-availabilityModal.classList.remove('open');availabilityBackdrop.classList.remove('open')}
+function openAvailabilityModal(){toggleContact(false);const today=new Date();today.setMinutes(today.getMinutes()-today.getTimezoneOffset());weddingDate.min=today.toISOString().split('T')[0];availabilityStatus.classList.remove('show');availabilityModal.classList.add('open');availabilityBackdrop.classList.add('open');setTimeout(()=>document.getElementById('coupleNames')?.focus(),180)}
+function closeAvailabilityModal(){availabilityModal.classList.remove('open');availabilityBackdrop.classList.remove('open')}
 openAvailability?.addEventListener('click',openAvailabilityModal);availabilityClose?.addEventListener('click',closeAvailabilityModal);availabilityCancel?.addEventListener('click',closeAvailabilityModal);availabilityBackdrop?.addEventListener('click',closeAvailabilityModal);
-availabilityForm?.addEventListener('submit',e=>{
-e.preventDefault();
-const d=new FormData(availabilityForm);
-const t=`💍 Richiesta Wedding Tattoo Experience
+availabilityForm?.addEventListener('submit',e=>{e.preventDefault();if(!availabilityForm.reportValidity())return;const data=new FormData(availabilityForm);const message=['Buongiorno, vorrei verificare la disponibilità per il Wedding Tattoo Experience.','',`Sposi: ${data.get('coupleNames')}`,`Data matrimonio: ${data.get('weddingDate')}`,`Luogo / Location: ${data.get('weddingLocation')}`,`Numero invitati: ${data.get('guestCount')||'Da definire'}`,`Pacchetto: ${data.get('packageChoice')||'Da definire'}`,`Telefono: ${data.get('clientPhone')}`,`Email: ${data.get('clientEmail')||'Non indicata'}`,`Note: ${data.get('requestNotes')||'Nessuna'}`].join('\n');availabilityStatus.classList.add('show');setTimeout(()=>window.open('https://wa.me/393477050250?text='+encodeURIComponent(message),'_blank','noopener'),250)});
 
-Sposi: ${d.get('coupleNames')}
-Data: ${d.get('weddingDate')}
-Location: ${d.get('weddingLocation')}
-Invitati: ${d.get('guestCount')}
-Telefono: ${d.get('clientPhone')}
-Email: ${d.get('clientEmail')}
-Note: ${d.get('requestNotes')}`;
-window.open('https://wa.me/393477050250?text='+encodeURIComponent(t),'_blank');
-});
 updateUI();})();
 </script>
 </body>
