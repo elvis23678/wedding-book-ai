@@ -140,6 +140,68 @@ input:focus,select:focus{border-color:var(--gold2)}
 }
 @media(max-width:620px){.action-grid{grid-template-columns:1fr}}
 
+
+.signature-letter{
+  margin:0 18px 20px;
+  padding:22px;
+  border:1px solid rgba(201,154,54,.30);
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 85% 15%,rgba(201,154,54,.10),transparent 35%),
+    linear-gradient(145deg,rgba(255,255,255,.025),rgba(201,154,54,.06));
+  position:relative;
+  overflow:hidden;
+}
+.signature-letter::before{
+  content:"“";
+  position:absolute;
+  left:14px;
+  top:-18px;
+  font-family:Georgia,serif;
+  font-size:92px;
+  color:rgba(240,207,117,.15);
+}
+.signature-letter h3{
+  position:relative;
+  margin:0 0 12px;
+  font-family:Georgia,serif;
+  font-weight:400;
+  color:var(--gold2);
+  font-size:27px;
+}
+.signature-letter p{
+  position:relative;
+  margin:0;
+  color:#e1d7c5;
+  line-height:1.72;
+}
+.signature-closing{
+  position:relative;
+  margin-top:20px;
+  padding-top:16px;
+  border-top:1px solid rgba(201,154,54,.24);
+  text-align:right;
+}
+.signature-closing small{
+  display:block;
+  margin-bottom:4px;
+  color:#b8ad99;
+}
+.signature-image{
+  display:block;
+  width:min(310px,85%);
+  height:auto;
+  margin:2px 0 0 auto;
+  filter:invert(83%) sepia(43%) saturate(725%) hue-rotate(357deg) brightness(102%) contrast(90%);
+}
+.signature-role{
+  margin-top:0;
+  color:#9f9584;
+  font-size:11px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+}
+
 </style>
 </head>
 <body>
@@ -237,10 +299,15 @@ input:focus,select:focus{border-color:var(--gold2)}
       <div class="timeline" id="timeline"></div>
     </div>
 
-    <div class="advice-box">
-      <h3>Se fossi al tuo posto...</h3>
+    <section class="signature-letter">
+      <h3>Il consiglio di Elvis</h3>
       <p id="personalAdvice"></p>
-    </div>
+      <div class="signature-closing">
+        <small>Con stima,</small>
+        <img class="signature-image" id="signatureImage" src="firma-elvis.png" alt="Firma Elvis Billeci">
+        <div class="signature-role">Founder · Wedding Tattoo Experience</div>
+      </div>
+    </section>
 
     <div class="cta-wrap">
       <div class="action-grid">
@@ -581,7 +648,21 @@ function downloadQuotePdf(){
   doc.setFontSize(11);
   const adviceLines=doc.splitTextToSize(q.advice,168);
   doc.text(adviceLines,20,y);
-  y+=adviceLines.length*6+12;
+  y+=adviceLines.length*6+8;
+
+  const signatureElement=document.getElementById("signatureImage");
+  if(signatureElement && signatureElement.complete){
+    try{
+      doc.addImage(signatureElement,"PNG",112,y,72,22,undefined,"FAST");
+      y+=27;
+      doc.setTextColor(170,160,144);
+      doc.setFontSize(8);
+      doc.text("Founder · Wedding Tattoo Experience",184,y,{align:"right"});
+      y+=8;
+    }catch(error){
+      y+=4;
+    }
+  }
 
   doc.setTextColor(...gold);
   doc.setFontSize(14);
