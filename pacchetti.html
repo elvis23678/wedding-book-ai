@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<title>Configuratore Pacchetti | Wedding Tattoo Experience</title>
+<style>
+:root{
+  --gold:#c99a36;
+  --gold2:#f0cf75;
+  --bg:#050505;
+  --card:#11100d;
+  --text:#f7f3ea;
+  --muted:#b9af9c;
+  --line:rgba(201,154,54,.28);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#050505;color:var(--text);font-family:Inter,Arial,sans-serif}
+body{background:radial-gradient(circle at 50% 0,#1a1207 0,#080706 30%,#020202 75%)}
+a{color:inherit}
+.wrap{width:min(980px,100%);margin:auto;padding:24px 18px 80px}
+.back{display:inline-block;margin-bottom:20px;color:var(--gold2);text-decoration:none}
+.hero{text-align:center;padding:20px 0 28px}
+.hero small{color:var(--gold2);letter-spacing:.18em;text-transform:uppercase}
+.hero h1{font-family:Georgia,serif;font-weight:400;font-size:clamp(34px,7vw,66px);margin:10px 0;color:var(--gold2)}
+.hero p{max-width:700px;margin:auto;color:#d7cebf;line-height:1.6}
+.panel,.result{border:1px solid var(--line);border-radius:24px;background:rgba(12,12,11,.94);box-shadow:0 24px 70px rgba(0,0,0,.45)}
+.panel{padding:20px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:7px}
+.field.full{grid-column:1/-1}
+label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#ddcfae}
+input,select{
+  width:100%;
+  min-height:50px;
+  border:1px solid rgba(201,154,54,.30);
+  border-radius:14px;
+  background:#0d0d0c;
+  color:#fff;
+  padding:12px 14px;
+  font:inherit;
+  outline:none;
+}
+input:focus,select:focus{border-color:var(--gold2)}
+.location-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+.maps-btn{
+  min-width:52px;border:1px solid var(--line);border-radius:14px;background:#17130c;color:var(--gold2);
+  display:grid;place-items:center;text-decoration:none;padding:0 14px
+}
+.calculate{
+  width:100%;min-height:54px;margin-top:18px;border:0;border-radius:999px;
+  background:linear-gradient(135deg,#e8c66c,#c99a36);color:#111;font-weight:800;font-size:16px;cursor:pointer
+}
+.note{margin:12px 0 0;color:#958d80;font-size:12px;line-height:1.5}
+.result{display:none;margin-top:22px;overflow:hidden}
+.result.show{display:block}
+.result-head{padding:22px;border-bottom:1px solid var(--line);text-align:center}
+.result-head small{color:var(--gold2);letter-spacing:.16em;text-transform:uppercase}
+.result-head h2{font-family:Georgia,serif;font-size:clamp(34px,7vw,58px);font-weight:400;color:var(--gold2);margin:8px 0}
+.result-head p{margin:0;color:#d8cfbf}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:18px}
+.metric{padding:16px 10px;border:1px solid rgba(201,154,54,.18);border-radius:16px;text-align:center;background:#0b0b0a}
+.metric strong{display:block;color:var(--gold2);font-size:22px;margin-bottom:5px}
+.metric span{font-size:11px;color:#aaa193;text-transform:uppercase;letter-spacing:.06em}
+.packages{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 18px 18px}
+.package{position:relative;border:1px solid rgba(201,154,54,.20);border-radius:18px;padding:18px;background:#0b0b0a}
+.package.recommended{border-color:var(--gold2);box-shadow:0 0 0 1px var(--gold2),0 18px 45px rgba(0,0,0,.35)}
+.badge{display:none;position:absolute;top:-10px;left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--gold);color:#111;border-radius:999px;padding:5px 10px;font-size:10px;font-weight:800}
+.package.recommended .badge{display:block}
+.package h3{font-family:Georgia,serif;color:var(--gold2);font-size:25px;margin:4px 0}
+.price{font-size:23px;font-weight:800;margin:8px 0}
+.package ul{padding-left:18px;color:#cfc5b4;font-size:13px;line-height:1.6}
+.total{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.total strong{display:block;color:var(--gold2);font-size:21px}
+.reasons{padding:0 22px 20px}
+.reasons h3{font-family:Georgia,serif;color:var(--gold2);font-size:24px;font-weight:400}
+.reasons ul{line-height:1.8;color:#d7cebf}
+.cta-wrap{padding:0 20px 24px}
+.cta{
+  display:block;text-align:center;text-decoration:none;padding:16px;border-radius:999px;
+  background:linear-gradient(135deg,#e8c66c,#c99a36);color:#111;font-weight:800
+}
+.warning{margin-top:12px;color:#b9af9c;font-size:12px;text-align:center;line-height:1.5}
+@media(max-width:760px){
+  .grid{grid-template-columns:1fr}
+  .field.full{grid-column:auto}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .packages{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="index.html">← Torna al Wedding Book</a>
+
+  <section class="hero">
+    <small>Wedding Planner</small>
+    <h1>Trova il pacchetto perfetto</h1>
+    <p>Inserisci i dati del matrimonio. Il configuratore stima i tatuaggi, le ore necessarie e confronta i pacchetti per consigliarti la soluzione più conveniente.</p>
+  </section>
+
+  <section class="panel">
+    <div class="grid">
+      <div class="field full">
+        <label for="location">Indirizzo della location</label>
+        <div class="location-row">
+          <input id="location" placeholder="Es. Villa..., Torino">
+          <a id="mapsLink" class="maps-btn" href="#" target="_blank" rel="noopener" aria-label="Apri percorso su Google Maps">📍</a>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="km">Km effettivi dallo studio (solo andata)</label>
+        <input id="km" type="number" min="0" step="1" placeholder="Es. 42">
+      </div>
+
+      <div class="field">
+        <label for="guests">Numero invitati</label>
+        <input id="guests" type="number" min="1" max="1000" value="100">
+      </div>
+
+      <div class="field">
+        <label for="interest">Percentuale prevista di tatuati</label>
+        <select id="interest">
+          <option value="10">10%</option>
+          <option value="20">20%</option>
+          <option value="30" selected>30%</option>
+          <option value="40">40%</option>
+          <option value="50">50%</option>
+          <option value="60">60%</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="extraHour">Prezzo ora extra</label>
+        <input id="extraHour" type="number" min="0" step="10" value="150">
+      </div>
+    </div>
+
+    <button class="calculate" id="calculate" type="button">Calcola il pacchetto consigliato</button>
+    <p class="note">La capacità viene calcolata su una media prudenziale di 3 tatuaggi all’ora. I chilometri devono essere letti dal percorso reale su Google Maps e inseriti nel campo dedicato.</p>
+  </section>
+
+  <section class="result" id="result">
+    <div class="result-head">
+      <small>Analisi completata</small>
+      <h2 id="recommendedName">Signature</h2>
+      <p id="recommendationText"></p>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><strong id="tattoosMetric">0</strong><span>Tatuaggi stimati</span></div>
+      <div class="metric"><strong id="hoursMetric">0</strong><span>Ore necessarie</span></div>
+      <div class="metric"><strong id="kmMetric">0 km</strong><span>Distanza andata</span></div>
+      <div class="metric"><strong id="returnKmMetric">0 km</strong><span>Km A/R</span></div>
+    </div>
+
+    <div class="packages" id="packages"></div>
+
+    <div class="reasons">
+      <h3>Perché te lo consigliamo</h3>
+      <ul id="reasonsList"></ul>
+    </div>
+
+    <div class="cta-wrap">
+      <a class="cta" id="whatsappCta" href="#" target="_blank" rel="noopener">Richiedi questo pacchetto su WhatsApp</a>
+      <p class="warning" id="travelWarning"></p>
+    </div>
+  </section>
+</main>
+
+<script>
+const STUDIO = "Tattoo Beauty Saloon, Via Torino 1A, 10055 Condove TO";
+
+const PACKAGES = [
+  {
+    id:"essential",
+    name:"Essential",
+    price:790,
+    hours:4,
+    tattoos:12,
+    includedKm:30,
+    travelText:"Trasferta inclusa entro 30 km"
+  },
+  {
+    id:"signature",
+    name:"Signature",
+    price:1090,
+    hours:6,
+    tattoos:18,
+    includedKm:50,
+    travelText:"Trasferta inclusa entro 50 km"
+  },
+  {
+    id:"luxury",
+    name:"Luxury",
+    price:1690,
+    hours:8,
+    tattoos:24,
+    includedKm:Infinity,
+    travelText:"Trasferta inclusa in tutto il Piemonte"
+  }
+];
+
+const euro = n => new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n);
+
+function updateMapsLink(){
+  const destination=document.getElementById("location").value.trim();
+  const link=document.getElementById("mapsLink");
+  link.href="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(STUDIO)+"&destination="+encodeURIComponent(destination||"Location matrimonio");
+}
+document.getElementById("location").addEventListener("input",updateMapsLink);
+updateMapsLink();
+
+function packageCost(pkg,hoursNeeded,extraHourPrice){
+  const extraHours=Math.max(0,hoursNeeded-pkg.hours);
+  return {
+    ...pkg,
+    extraHours,
+    extraCost:extraHours*extraHourPrice,
+    total:pkg.price+(extraHours*extraHourPrice)
+  };
+}
+
+function recommend(calculated,tattoos,hoursNeeded,km){
+  if(hoursNeeded>=7 || tattoos>18) return calculated.find(p=>p.id==="luxury");
+  if(hoursNeeded>=5 || tattoos>12 || km>30) return calculated.find(p=>p.id==="signature");
+  return calculated.find(p=>p.id==="essential");
+}
+
+function calculate(){
+  const guests=Math.max(1,Number(document.getElementById("guests").value)||1);
+  const interest=Math.max(0,Number(document.getElementById("interest").value)||0);
+  const km=Math.max(0,Number(document.getElementById("km").value)||0);
+  const extraHourPrice=Math.max(0,Number(document.getElementById("extraHour").value)||0);
+  const location=document.getElementById("location").value.trim()||"Da definire";
+
+  const tattoos=Math.max(1,Math.round(guests*(interest/100)));
+  const hoursNeeded=Math.max(1,Math.ceil(tattoos/3));
+  const calculated=PACKAGES.map(p=>packageCost(p,hoursNeeded,extraHourPrice));
+  const recommended=recommend(calculated,tattoos,hoursNeeded,km);
+
+  document.getElementById("tattoosMetric").textContent=tattoos;
+  document.getElementById("hoursMetric").textContent=hoursNeeded;
+  document.getElementById("kmMetric").textContent=km+" km";
+  document.getElementById("returnKmMetric").textContent=(km*2)+" km";
+  document.getElementById("recommendedName").textContent="⭐ "+recommended.name;
+  document.getElementById("recommendationText").textContent=
+    `Con circa ${tattoos} tatuaggi previsti e ${hoursNeeded} ore necessarie, ${recommended.name} offre il miglior equilibrio tra copertura dell’evento, margine di sicurezza e costo complessivo.`;
+
+  const packages=document.getElementById("packages");
+  packages.innerHTML="";
+  calculated.forEach(pkg=>{
+    const travelIncluded=pkg.includedKm===Infinity || km<=pkg.includedKm;
+    const div=document.createElement("article");
+    div.className="package"+(pkg.id===recommended.id?" recommended":"");
+    div.innerHTML=`
+      <span class="badge">PACCHETTO CONSIGLIATO</span>
+      <h3>${pkg.name}</h3>
+      <div class="price">${euro(pkg.price)} + IVA</div>
+      <ul>
+        <li>${pkg.hours} ore incluse</li>
+        <li>Fino a circa ${pkg.tattoos} tatuaggi</li>
+        <li>${pkg.travelText}</li>
+        <li>${pkg.extraHours ? pkg.extraHours+" ore extra necessarie" : "Nessuna ora extra necessaria"}</li>
+        <li>${travelIncluded ? "Trasferta compresa" : "Supplemento trasferta da confermare"}</li>
+      </ul>
+      <div class="total">
+        <span>Totale stimato</span>
+        <strong>${euro(pkg.total)} + IVA</strong>
+        ${pkg.extraCost ? `<small>incluse ${euro(pkg.extraCost)} di ore extra</small>` : ""}
+      </div>`;
+    packages.appendChild(div);
+  });
+
+  const reasons=[];
+  if(recommended.id==="luxury"){
+    reasons.push("Copre fino a circa 24 tatuaggi senza comprimere i tempi.");
+    reasons.push("Offre il margine migliore per richieste impreviste durante l’evento.");
+    reasons.push("Evita di dipendere da troppe ore extra.");
+    reasons.push("Include la trasferta in tutto il Piemonte.");
+  }else if(recommended.id==="signature"){
+    reasons.push("È il miglior equilibrio tra durata, capacità e prezzo.");
+    reasons.push("Gestisce fino a circa 18 tatuaggi con tempi più rilassati.");
+    reasons.push("Include la trasferta entro 50 km.");
+    if(calculated.find(p=>p.id==="signature").extraHours>0) reasons.push("Le ore extra vengono già conteggiate nel totale stimato.");
+  }else{
+    reasons.push("È sufficiente per un matrimonio intimo o con poche richieste.");
+    reasons.push("Copre fino a circa 12 tatuaggi.");
+    reasons.push("Include la trasferta entro 30 km.");
+  }
+  document.getElementById("reasonsList").innerHTML=reasons.map(r=>`<li>${r}</li>`).join("");
+
+  const travelIncluded=recommended.includedKm===Infinity || km<=recommended.includedKm;
+  document.getElementById("travelWarning").textContent=travelIncluded
+    ? "La trasferta risulta compresa nel pacchetto consigliato."
+    : "La distanza supera quella inclusa: il supplemento trasferta verrà confermato dallo staff.";
+
+  const message=`💍 CONFIGURAZIONE WEDDING TATTOO EXPERIENCE
+
+📍 Location: ${location}
+🚗 Distanza dallo studio: ${km} km (${km*2} km A/R)
+👥 Invitati: ${guests}
+✒️ Tatuaggi stimati: ${tattoos}
+⏱️ Ore stimate: ${hoursNeeded}
+
+⭐ Pacchetto consigliato: ${recommended.name}
+💶 Totale stimato: ${euro(recommended.total)} + IVA
+➕ Ore extra: ${recommended.extraHours}
+${travelIncluded ? "🚗 Trasferta inclusa" : "🚗 Supplemento trasferta da confermare"}
+
+Vorrei ricevere un preventivo definitivo.`;
+
+  document.getElementById("whatsappCta").href=
+    "https://wa.me/393477050250?text="+encodeURIComponent(message);
+
+  document.getElementById("result").classList.add("show");
+  document.getElementById("result").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+document.getElementById("calculate").addEventListener("click",calculate);
+</script>
+</body>
+</html>
