@@ -226,14 +226,35 @@ function packageCost(pkg,hoursNeeded,km){
 }
 
 function recommend(calculated,tattoos,hoursNeeded,km){
-  const sorted=[...calculated].sort((a,b)=>a.total-b.total);
-  let best=sorted[0];
+  const byId=Object.fromEntries(calculated.map(p=>[p.id,p]));
+  let best=[...calculated].sort((a,b)=>a.total-b.total)[0];
 
-  const order={essential:1,signature:2,luxury:3};
-  const next=sorted.find(p=>order[p.id]>order[best.id]);
+  const essential=byId.essential;
+  const signature=byId.signature;
+  const luxury=byId.luxury;
 
-  if(next && (next.total-best.total)<=150){
-    best=next;
+  // Regola operativa: troppe ore extra rendono il pacchetto poco adatto.
+  if(best.id==="essential" && essential.extraHours>=2){
+    best=signature;
+  }
+
+  if(best.id==="signature" && signature.extraHours>=3){
+    best=luxury;
+  }
+
+  // Regola economica: se il pacchetto superiore costa poco di più,
+  // privilegiamo maggiore margine, ore incluse e trasferta.
+  if(best.id==="essential" && (signature.total-essential.total)<=200){
+    best=signature;
+  }
+
+  if(best.id==="signature" && (luxury.total-signature.total)<=300){
+    best=luxury;
+  }
+
+  // Regola distanza: oltre i km Signature, Luxury acquista più valore.
+  if(km>50 && (luxury.total-signature.total)<=350){
+    best=luxury;
   }
 
   return best;
@@ -256,7 +277,7 @@ function calculate(){
   document.getElementById("returnKmMetric").textContent=(km*2)+" km";
   document.getElementById("recommendedName").textContent="⭐ "+recommended.name;
   document.getElementById("recommendationText").textContent=
-    `Con circa ${tattoos} tatuaggi previsti, ${hoursNeeded} ore necessarie e ${km} km di distanza, ${recommended.name} risulta il pacchetto più conveniente considerando ore incluse, chilometri inclusi ed eventuali extra.`;
+    `Con circa ${tattoos} tatuaggi previsti, ${hoursNeeded} ore necessarie e ${km} km di distanza, ${recommended.name} è la scelta più equilibrata considerando prezzo, ore incluse, trasferta e margine operativo.`;
 
   const packages=document.getElementById("packages");
   packages.innerHTML="";
@@ -285,28 +306,60 @@ function calculate(){
 
   const reasons=[];
   const cheapest=[...calculated].sort((a,b)=>a.total-b.total)[0];
+
   if(recommended.id!==cheapest.id){
-    reasons.push(`Costa solo ${euro(recommended.total-cheapest.total)} in più rispetto alla soluzione più economica, ma offre un margine operativo superiore.`);
+    reasons.push(`La soluzione più economica costa ${euro(cheapest.total)}, ma ${recommended.name} offre un equilibrio migliore tra ore incluse, trasferta e margine operativo.`);
   }else{
     reasons.push("È la soluzione con il totale stimato più conveniente considerando ore e chilometri.");
   }
+
+  if(recommended.id==="signature"){
+    const essential=calculated.find(p=>p.id==="essential");
+    if(essential.extraHours>=2){
+      reasons.push(`Essential richiederebbe ${essential.extraHours} ore extra: per questo Signature è più adatto all’evento.`);
+    }
+    if(essential.extraKm>0){
+      reasons.push(`Essential supera di ${essential.extraKm} km la soglia inclusa, mentre Signature copre meglio la trasferta.`);
+    }
+    reasons.push("Signature mantiene un buon equilibrio tra capacità, durata e prezzo.");
+  }
+
+  if(recommended.id==="luxury"){
+    const signature=calculated.find(p=>p.id==="signature");
+    const difference=recommended.total-signature.total;
+
+    if(signature.extraHours>=3){
+      reasons.push(`Signature richiederebbe ${signature.extraHours} ore extra, una quota troppo alta rispetto alle 6 ore incluse.`);
+    }
+
+    if(signature.extraKm>0){
+      reasons.push(`Signature supera di ${signature.extraKm} km la soglia inclusa, mentre Luxury include la trasferta in tutto il Piemonte.`);
+    }
+
+    if(difference>0 && difference<=300){
+      reasons.push(`Luxury costa solo ${euro(difference)} in più rispetto a Signature, ma offre 2 ore incluse in più e maggiore tranquillità.`);
+    }
+
+    reasons.push("Luxury offre il margine migliore per richieste impreviste e riduce il rischio di lasciare ospiti esclusi.");
+  }
+
+  if(recommended.id==="essential"){
+    reasons.push("È adatto a eventi intimi con un numero limitato di richieste.");
+    reasons.push("Le ore e i chilometri previsti rientrano nel pacchetto senza extra rilevanti.");
+  }
+
   if(recommended.extraHours===0){
     reasons.push("Non richiede ore extra.");
   }else{
-    reasons.push(`Comprende già nel calcolo ${recommended.extraHours} ore extra al prezzo corretto di ${euro(EXTRA_HOUR_PRICE)} l’una.`);
+    reasons.push(`Il totale include ${recommended.extraHours} ore extra a ${euro(EXTRA_HOUR_PRICE)} l’una.`);
   }
+
   if(recommended.extraKm===0){
     reasons.push("La distanza rientra nei chilometri inclusi.");
   }else{
     reasons.push(`Il totale include ${recommended.extraKm} km oltre soglia, conteggiati automaticamente andata e ritorno.`);
   }
-  if(recommended.id==="luxury"){
-    reasons.push("Offre il margine migliore per richieste impreviste durante l’evento.");
-  }else if(recommended.id==="signature"){
-    reasons.push("Rappresenta il miglior equilibrio tra durata, copertura e prezzo.");
-  }else{
-    reasons.push("È adatto a eventi intimi con un numero limitato di richieste.");
-  }
+
   document.getElementById("reasonsList").innerHTML=reasons.map(r=>`<li>${r}</li>`).join("");
 
   const travelIncluded=recommended.includedKm===Infinity || km<=recommended.includedKm;
