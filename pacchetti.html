@@ -685,180 +685,279 @@ function downloadQuotePdf(){
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({unit:"mm",format:"a4"});
   const q=currentQuote;
-  const gold=[168,119,32];
-  const dark=[30,30,30];
-  const muted=[95,95,95];
+
+  const ink=[64,43,24];
+  const antiqueGold=[145,99,38];
+  const parchment=[238,220,182];
+  const parchmentLight=[248,239,216];
+  const muted=[112,91,63];
   const today=new Date();
   const depositDue=addCalendarDays(today,DEPOSIT_DUE_DAYS);
   const holdUntil=addCalendarDays(today,DATE_HOLD_DAYS);
   const deposit=Math.round((q.recommended.total*DEPOSIT_PERCENT)/100);
+  const proposalId=`WTE-${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}${String(today.getDate()).padStart(2,"0")}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
 
-  // Sfondo bianco e cornice.
-  doc.setFillColor(255,255,255);
-  doc.rect(0,0,210,297,"F");
-  doc.setDrawColor(...gold);
-  doc.setLineWidth(.35);
-  doc.rect(10,10,190,277);
-
-  // Intestazione.
-  doc.setTextColor(...gold);
-  doc.setFont("times","bold");
-  doc.setFontSize(22);
-  doc.text("WEDDING TATTOO EXPERIENCE",105,24,{align:"center"});
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(9);
-  doc.text("LOVE. MARKED. FOREVER.",105,31,{align:"center"});
-  doc.setDrawColor(...gold);
-  doc.line(20,37,190,37);
-
-  let y=47;
-
-  // Titolo documento.
-  doc.setTextColor(...dark);
-  doc.setFont("times","bold");
-  doc.setFontSize(17);
-  doc.text("Proposta di prenotazione",20,y);
-  y+=8;
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(9);
-  doc.setTextColor(...muted);
-  doc.text(`Generata il ${formatDateObject(today)}`,20,y);
-  y+=10;
-
-  const sectionTitle=(title)=>{
-    doc.setFillColor(247,244,237);
-    doc.setDrawColor(220,210,190);
-    doc.roundedRect(18,y-5,174,9,2,2,"FD");
-    doc.setTextColor(...gold);
-    doc.setFont("helvetica","bold");
-    doc.setFontSize(10);
-    doc.text(title.toUpperCase(),22,y+1);
-    y+=10;
-  };
-
-  const row=(label,value)=>{
-    doc.setFont("helvetica","bold");
-    doc.setFontSize(9);
-    doc.setTextColor(...gold);
-    doc.text(label,22,y);
-    doc.setFont("helvetica","normal");
-    doc.setTextColor(...dark);
-    const lines=doc.splitTextToSize(String(value),112);
-    doc.text(lines,73,y);
-    y+=Math.max(6,lines.length*5);
-  };
-
-  sectionTitle("Dati dell'evento");
-  row("Sposi",q.names||"Non indicati");
-  row("Data matrimonio",formatItalianDate(q.date));
-  row("Ora inizio servizio",q.startTime||"Da definire");
-  row("Location",q.location||"Da definire");
-  row("Distanza",`${q.km} km - ${q.km*2} km A/R`);
-  row("Invitati",q.guests);
-  y+=2;
-
-  sectionTitle("Analisi e pacchetto");
-  row("Tatuaggi stimati",q.tattoos);
-  row("Ore previste",q.hoursNeeded);
-  row("Pacchetto consigliato",q.recommended.name);
-  row("Ore incluse",q.recommended.hours);
-  row("Ore extra",`${q.recommended.extraHours} - ${euro(q.recommended.extraHourCost)}`);
-  row("Trasferta extra",`${q.recommended.extraKm} km - ${euro(q.recommended.extraKmCost)}`);
-  row("Totale stimato",`${euro(q.recommended.total)} + IVA`);
-  y+=2;
-
-  // Acconto evidenziato.
-  doc.setFillColor(252,248,238);
-  doc.setDrawColor(...gold);
-  doc.roundedRect(18,y,174,29,3,3,"FD");
-  doc.setTextColor(...gold);
-  doc.setFont("times","bold");
-  doc.setFontSize(14);
-  doc.text("Acconto per confermare la data",22,y+8);
-  doc.setTextColor(...dark);
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(13);
-  doc.text(`${euro(deposit)} + IVA`,22,y+17);
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(...muted);
-  doc.text(`Pari al ${DEPOSIT_PERCENT}% del totale stimato. Pagamento entro il ${formatDateObject(depositDue)}.`,22,y+24);
-  y+=36;
-
-  sectionTitle("Il consiglio Wedding Tattoo Experience");
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(9.5);
-  doc.setTextColor(...dark);
-  const adviceLines=doc.splitTextToSize(q.advice,166);
-  doc.text(adviceLines,22,y);
-  y+=adviceLines.length*4.8+6;
-
-  // Se lo spazio non basta, nuova pagina.
-  if(y>205){
-    doc.addPage();
-    doc.setFillColor(255,255,255);
+  function parchmentPage(){
+    doc.setFillColor(...parchment);
     doc.rect(0,0,210,297,"F");
-    doc.setDrawColor(...gold);
+
+    // texture carta
+    for(let i=0;i<120;i++){
+      const x=Math.random()*210;
+      const y=Math.random()*297;
+      const shade=225+Math.floor(Math.random()*15);
+      doc.setFillColor(shade,shade-7,shade-22);
+      doc.circle(x,y,Math.random()*.22+.05,"F");
+    }
+
+    doc.setFillColor(...parchmentLight);
+    doc.roundedRect(8,8,194,281,1.5,1.5,"F");
+
+    doc.setDrawColor(...antiqueGold);
+    doc.setLineWidth(.55);
     doc.rect(10,10,190,277);
-    y=22;
+    doc.setLineWidth(.2);
+    doc.rect(13,13,184,271);
+
+    // ornamenti angolari
+    const corners=[[18,18,1,1],[192,18,-1,1],[18,279,1,-1],[192,279,-1,-1]];
+    corners.forEach(([x,y,sx,sy])=>{
+      doc.setLineWidth(.45);
+      doc.line(x,y,x+13*sx,y);
+      doc.line(x,y,x,y+13*sy);
+      doc.line(x+4*sx,y+4*sy,x+10*sx,y+4*sy);
+      doc.line(x+4*sx,y+4*sy,x+4*sx,y+10*sy);
+      doc.circle(x+6*sx,y+6*sy,1.3,"S");
+    });
+
+    // watermark W
+    doc.setTextColor(226,211,178);
+    doc.setFont("times","bold");
+    doc.setFontSize(90);
+    doc.text("W",105,185,{align:"center"});
   }
 
-  sectionTitle("Accettazione della proposta");
+  function header(){
+    doc.setTextColor(...antiqueGold);
+    doc.setFont("times","bold");
+    doc.setFontSize(20);
+    doc.text("WEDDING TATTOO EXPERIENCE",105,25,{align:"center"});
+    doc.setFont("times","italic");
+    doc.setFontSize(9);
+    doc.text("LOVE. MARKED. FOREVER.",105,32,{align:"center"});
+    doc.setDrawColor(...antiqueGold);
+    doc.line(28,38,182,38);
+  }
+
+  function seal(x,y,text){
+    doc.setFillColor(173,124,48);
+    doc.circle(x,y,12,"F");
+    doc.setDrawColor(120,79,25);
+    doc.circle(x,y,12,"S");
+    doc.circle(x,y,9.5,"S");
+    doc.setTextColor(255,246,221);
+    doc.setFont("times","bold");
+    doc.setFontSize(8);
+    doc.text(text,x,y+2.5,{align:"center"});
+  }
+
+  function sectionTitle(title,y){
+    doc.setTextColor(...antiqueGold);
+    doc.setFont("times","bold");
+    doc.setFontSize(11);
+    doc.text(title.toUpperCase(),20,y);
+    doc.setDrawColor(...antiqueGold);
+    doc.line(20,y+2,190,y+2);
+    return y+8;
+  }
+
+  function narrativeRow(label,value,y){
+    doc.setFont("times","bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...ink);
+    doc.text(label,22,y);
+    doc.setFont("times","normal");
+    const lines=doc.splitTextToSize(String(value),118);
+    doc.text(lines,70,y);
+    return y+Math.max(6,lines.length*5);
+  }
+
+  function footer(pageNo){
+    doc.setDrawColor(196,171,126);
+    doc.line(24,272,186,272);
+    doc.setFont("times","italic");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...muted);
+    doc.text(`Codice proposta ${proposalId} · Pagina ${pageNo}/2`,105,279,{align:"center"});
+    doc.text("Tattoo Beauty Saloon · Via Torino 1A, Condove (TO) · WhatsApp +39 347 705 0250",105,284,{align:"center"});
+  }
+
+  // PAGINA 1
+  parchmentPage();
+  header();
+  seal(174,54,"WTE");
+
+  let y=50;
+  doc.setTextColor(...ink);
+  doc.setFont("times","bold");
+  doc.setFontSize(23);
+  doc.text("ATTO DI PRENOTAZIONE",20,y);
+  y+=7;
+  doc.setFont("times","italic");
+  doc.setFontSize(10);
+  doc.setTextColor(...muted);
+  doc.text("Proposta personalizzata per il vostro matrimonio",20,y);
   doc.setFont("helvetica","normal");
-  doc.setFontSize(8.8);
-  doc.setTextColor(...dark);
+  doc.setFontSize(7.5);
+  doc.text(`Documento riservato · ${proposalId}`,190,y,{align:"right"});
+  y+=14;
+
+  doc.setFont("times","normal");
+  doc.setTextColor(...ink);
+  doc.setFontSize(10.5);
+  const preamble=`Con il presente atto Wedding Tattoo Experience formula una proposta personalizzata sulla base dei dati comunicati dagli sposi e dell'analisi effettuata dal configuratore.`;
+  const preambleLines=doc.splitTextToSize(preamble,168);
+  doc.text(preambleLines,20,y);
+  y+=preambleLines.length*5.2+9;
+
+  y=sectionTitle("Dati dell'evento",y);
+  y=narrativeRow("Sposi",q.names||"Non indicati",y);
+  y=narrativeRow("Data",formatItalianDate(q.date),y);
+  y=narrativeRow("Ora prevista",q.startTime||"Da definire",y);
+  y=narrativeRow("Location",q.location||"Da definire",y);
+  y=narrativeRow("Distanza",`${q.km} km - ${q.km*2} km A/R`,y);
+  y=narrativeRow("Invitati",q.guests,y);
+  y+=4;
+
+  y=sectionTitle("Configurazione consigliata",y);
+  y=narrativeRow("Pacchetto",q.recommended.name,y);
+  y=narrativeRow("Tatuaggi stimati",q.tattoos,y);
+  y=narrativeRow("Ore previste",q.hoursNeeded,y);
+  y=narrativeRow("Ore incluse",q.recommended.hours,y);
+  y=narrativeRow("Ore extra",`${q.recommended.extraHours} - ${euro(q.recommended.extraHourCost)}`,y);
+  y=narrativeRow("Trasferta extra",`${q.recommended.extraKm} km - ${euro(q.recommended.extraKmCost)}`,y);
+  y+=5;
+
+  doc.setFillColor(244,229,198);
+  doc.setDrawColor(...antiqueGold);
+  doc.roundedRect(20,y,170,30,2,2,"FD");
+  doc.setTextColor(...antiqueGold);
+  doc.setFont("times","bold");
+  doc.setFontSize(12);
+  doc.text("VALORE DELLA PROPOSTA",25,y+9);
+  doc.setTextColor(...ink);
+  doc.setFontSize(17);
+  doc.text(`${euro(q.recommended.total)} + IVA`,25,y+20);
+  doc.setFontSize(11);
+  doc.text(`Acconto richiesto: ${euro(deposit)} + IVA`,185,y+20,{align:"right"});
+  y+=38;
+
+  y=sectionTitle("Parere del Wedding Expert",y);
+  doc.setFont("times","normal");
+  doc.setFontSize(9.7);
+  doc.setTextColor(...ink);
+  const adviceLines=doc.splitTextToSize(q.advice,166);
+  doc.text(adviceLines,22,y);
+
+  footer(1);
+
+  // PAGINA 2
+  doc.addPage();
+  parchmentPage();
+  header();
+  seal(174,54,"SIGILLO");
+
+  y=50;
+  doc.setTextColor(...ink);
+  doc.setFont("times","bold");
+  doc.setFontSize(21);
+  doc.text("ATTO DI ACCETTAZIONE",20,y);
+  y+=11;
+
+  doc.setFont("times","normal");
+  doc.setFontSize(10.2);
+  const intro=`Gli sposi dichiarano di aver preso visione della proposta identificata dal codice ${proposalId} e di voler procedere con il pacchetto ${q.recommended.name}.`;
+  const introLines=doc.splitTextToSize(intro,168);
+  doc.text(introLines,20,y);
+  y+=introLines.length*5.2+9;
+
+  doc.setFillColor(244,229,198);
+  doc.setDrawColor(...antiqueGold);
+  doc.roundedRect(20,y,170,24,2,2,"FD");
+  doc.setTextColor(...antiqueGold);
+  doc.setFont("times","bold");
+  doc.setFontSize(12);
+  doc.text("DATA RISERVATA FINO AL",25,y+9);
+  doc.setTextColor(...ink);
+  doc.setFontSize(16);
+  doc.text(formatDateObject(holdUntil),185,y+17,{align:"right"});
+  y+=33;
+
+  y=sectionTitle("Condizioni essenziali",y);
+  doc.setFont("times","normal");
+  doc.setFontSize(9.2);
+  doc.setTextColor(...ink);
   const terms=[
-    `Con la firma del presente documento gli sposi dichiarano di voler procedere con il pacchetto ${q.recommended.name}.`,
-    `La data resta bloccata in via provvisoria fino al ${formatDateObject(holdUntil)}.`,
-    `La prenotazione diventa definitiva solo dopo la ricezione del modulo firmato e del versamento dell'acconto.`,
-    `Dopo aver ricevuto il documento firmato, lo studio invierà i dati necessari per effettuare il pagamento.`,
-    `Il saldo e gli eventuali adeguamenti definitivi saranno indicati nel contratto di servizio.`
+    `La prenotazione diventa definitiva solo dopo la conferma espressa dello studio e l'incasso dell'acconto.`,
+    `L'acconto, pari al ${DEPOSIT_PERCENT}% del totale stimato, dovrà essere versato entro il ${formatDateObject(depositDue)}.`,
+    `Il saldo, le condizioni operative e gli eventuali adeguamenti saranno indicati nel contratto definitivo di servizio.`,
+    `Il documento dovrà essere restituito integralmente, leggibile e completo delle firme richieste.`,
+    `Lo studio potrà richiedere elementi aggiuntivi per verificare identità dei sottoscrittori e integrità del documento.`
   ];
   terms.forEach((t,i)=>{
     const lines=doc.splitTextToSize(`${i+1}. ${t}`,164);
     doc.text(lines,22,y);
-    y+=lines.length*4.6+2;
+    y+=lines.length*4.8+2;
   });
 
-  y+=5;
-  doc.setDrawColor(160,160,160);
-  doc.line(22,y+16,88,y+16);
-  doc.line(112,y+16,178,y+16);
-  doc.setFontSize(8);
-  doc.setTextColor(...muted);
-  doc.text("Luogo e data",22,y+21);
-  doc.text("Firma degli sposi",112,y+21);
-  y+=31;
+  y+=6;
+  y=sectionTitle("Validità della trasmissione",y);
+  doc.setFontSize(8.8);
+  const legal=`Il presente documento, una volta sottoscritto e trasmesso in formato PDF tramite email o WhatsApp ai recapiti ufficiali di Wedding Tattoo Experience, costituisce manifestazione della volontà di accettare la proposta e potrà essere utilizzato come elemento di prova dell'accordo secondo la normativa applicabile. La trasmissione mediante email o WhatsApp non equivale automaticamente a firma digitale o firma elettronica qualificata. La prenotazione si considera perfezionata esclusivamente dopo la conferma dello studio e l'incasso dell'acconto.`;
+  const legalLines=doc.splitTextToSize(legal,164);
+  doc.text(legalLines,22,y);
+  y+=legalLines.length*4.6+10;
 
-  // Firma Elvis.
-  const signatureElement=document.getElementById("signatureImage");
+  doc.setDrawColor(135,110,75);
+  doc.line(22,y+18,80,y+18);
+  doc.line(89,y+18,147,y+18);
+  doc.line(156,y+18,188,y+18);
+  doc.setTextColor(...muted);
+  doc.setFontSize(8);
+  doc.text("Luogo e data",22,y+23);
+  doc.text("Firma cliente 1",89,y+23);
+  doc.text("Firma cliente 2",156,y+23);
+
+  y+=37;
   doc.setTextColor(...muted);
   doc.setFontSize(8);
   doc.text("Per Wedding Tattoo Experience",178,y,{align:"right"});
+  const signatureElement=document.getElementById("signatureImage");
   if(signatureElement && signatureElement.complete){
     try{
-      doc.addImage(signatureElement,"PNG",112,y+2,66,20,undefined,"FAST");
+      doc.addImage(signatureElement,"PNG",110,y+2,68,21,undefined,"FAST");
     }catch(error){}
   }
-  doc.setTextColor(...dark);
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(8);
-  doc.text("Elvis Billeci",178,y+26,{align:"right"});
-  doc.setFont("helvetica","normal");
+  doc.setTextColor(...ink);
+  doc.setFont("times","bold");
+  doc.setFontSize(9);
+  doc.text("Elvis Billeci",178,y+27,{align:"right"});
+  doc.setFont("times","normal");
   doc.setTextColor(...muted);
-  doc.text("Founder · Wedding Tattoo Experience",178,y+31,{align:"right"});
+  doc.text("Founder · Wedding Tattoo Experience",178,y+32,{align:"right"});
 
-  // Footer.
-  doc.setDrawColor(220,210,190);
-  doc.line(20,273,190,273);
-  doc.setFontSize(8);
-  doc.setTextColor(...gold);
-  doc.text("Inviare il modulo firmato allo studio per ricevere i dati dell'acconto.",105,279,{align:"center"});
-  doc.setTextColor(...muted);
-  doc.text("WhatsApp +39 347 705 0250 · Tattoo Beauty Saloon · Via Torino 1A, Condove (TO)",105,284,{align:"center"});
+  y+=50;
+  doc.setFont("times","italic");
+  doc.setFontSize(9.5);
+  doc.setTextColor(...antiqueGold);
+  const closing="Ogni evento è unico. Ogni proposta viene elaborata su misura in base alle caratteristiche del vostro matrimonio.";
+  doc.text(doc.splitTextToSize(closing,160),105,y,{align:"center"});
 
-  const safeName=(q.names||"wedding").replace(/[^a-z0-9]+/gi,"_").replace(/^_|_$/g,"");
-  doc.save(`Proposta_Prenotazione_Wedding_Tattoo_${safeName}.pdf`);
+  footer(2);
+
+  const safeNames=(q.names||"wedding").replace(/[^a-z0-9]+/gi,"_").replace(/^_|_$/g,"");
+  const safeDate=(q.date||"data_da_definire").replace(/-/g,"_");
+  doc.save(`Atto_Prenotazione_${safeNames}_${safeDate}.pdf`);
 }
 
 function performCalculation(){
