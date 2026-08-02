@@ -40,12 +40,28 @@
     /* Verifica disponibilità */
     .availability-backdrop{position:absolute;inset:0;z-index:42;background:rgba(0,0,0,.68);backdrop-filter:blur(9px);opacity:0;visibility:hidden;transition:.25s ease}
     .availability-backdrop.open{opacity:1;visibility:visible}
-    .availability-modal{position:absolute;left:50%;top:50%;z-index:43;width:min(520px,calc(100vw - 24px));max-height:min(760px,calc(100dvh - 24px));transform:translate(-50%,-48%) scale(.985);opacity:0;visibility:hidden;display:flex;flex-direction:column;border:1px solid rgba(201,154,54,.40);border-radius:24px;overflow:hidden;background:linear-gradient(180deg,rgba(15,13,9,.995),rgba(3,3,3,.995));box-shadow:0 30px 100px rgba(0,0,0,.88);transition:.26s ease}
+    .availability-modal{
+position:fixed;
+inset:0;
+width:100%;
+height:100dvh;
+max-height:100dvh;
+overflow:hidden;
+display:flex;
+flex-direction:column;
+z-index:43;
+background:linear-gradient(180deg,rgba(15,13,9,.995),rgba(3,3,3,.995));
+}
     .availability-modal.open{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
     .availability-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 14px;border-bottom:1px solid rgba(201,154,54,.18)}
     .availability-head strong{font-family:Georgia,serif;color:var(--gold2);font-size:20px;font-weight:400}
     .availability-close{width:38px;height:38px;border-radius:50%;border:1px solid rgba(201,154,54,.28);background:transparent;color:var(--gold2);font-size:22px;cursor:pointer}
-    .availability-body{overflow:auto;padding:16px}
+    .availability-body{
+flex:1;
+overflow-y:auto;
+-webkit-overflow-scrolling:touch;
+padding:16px 16px 100px;
+}
     .availability-intro{margin:0 0 14px;color:#cfc5b3;font-size:13px;line-height:1.5}
     .availability-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
     .field{display:flex;flex-direction:column;gap:6px}
@@ -62,7 +78,8 @@
     .availability-status.show{display:block}
     @media(max-width:700px){.availability-backdrop{display:none}.availability-modal{left:0;top:0;width:100%;height:100dvh;max-height:none;border-radius:0;border-left:0;border-right:0;border-bottom:0;transform:translateY(18px)}.availability-modal.open{transform:none}.availability-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
 
-  </style>
+  body.modal-open{overflow:hidden;touch-action:none;}
+</style>
 </head>
 <body>
 <div class="app" id="app">
@@ -173,8 +190,10 @@ chatForm.addEventListener('submit',e=>{e.preventDefault();const m=chatInput.valu
 
 
 const openAvailability=document.getElementById('openAvailability'),availabilityModal=document.getElementById('availabilityModal'),availabilityBackdrop=document.getElementById('availabilityBackdrop'),availabilityClose=document.getElementById('availabilityClose'),availabilityCancel=document.getElementById('availabilityCancel'),availabilityForm=document.getElementById('availabilityForm'),availabilityStatus=document.getElementById('availabilityStatus'),weddingDate=document.getElementById('weddingDate');
-function openAvailabilityModal(){toggleContact(false);const today=new Date();today.setMinutes(today.getMinutes()-today.getTimezoneOffset());weddingDate.min=today.toISOString().split('T')[0];availabilityStatus.classList.remove('show');availabilityModal.classList.add('open');availabilityBackdrop.classList.add('open');setTimeout(()=>document.getElementById('coupleNames')?.focus(),180)}
-function closeAvailabilityModal(){availabilityModal.classList.remove('open');availabilityBackdrop.classList.remove('open')}
+function openAvailabilityModal(){toggleContact(false);const today=new Date();today.setMinutes(today.getMinutes()-today.getTimezoneOffset());weddingDate.min=today.toISOString().split('T')[0];availabilityStatus.classList.remove('show');document.body.classList.add('modal-open');
+availabilityModal.classList.add('open');availabilityBackdrop.classList.add('open');setTimeout(()=>document.getElementById('coupleNames')?.focus(),180)}
+function closeAvailabilityModal(){document.body.classList.remove('modal-open');
+availabilityModal.classList.remove('open');availabilityBackdrop.classList.remove('open')}
 openAvailability?.addEventListener('click',openAvailabilityModal);availabilityClose?.addEventListener('click',closeAvailabilityModal);availabilityCancel?.addEventListener('click',closeAvailabilityModal);availabilityBackdrop?.addEventListener('click',closeAvailabilityModal);
 availabilityForm?.addEventListener('submit',e=>{
 e.preventDefault();
