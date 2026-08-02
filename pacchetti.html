@@ -141,66 +141,95 @@ input:focus,select:focus{border-color:var(--gold2)}
 @media(max-width:620px){.action-grid{grid-template-columns:1fr}}
 
 
+
 .signature-letter{
   margin:0 18px 20px;
-  padding:22px;
-  border:1px solid rgba(201,154,54,.30);
-  border-radius:20px;
+  padding:24px 22px 22px;
+  border:1px solid rgba(201,154,54,.24);
+  border-radius:22px;
   background:
-    radial-gradient(circle at 85% 15%,rgba(201,154,54,.10),transparent 35%),
-    linear-gradient(145deg,rgba(255,255,255,.025),rgba(201,154,54,.06));
+    radial-gradient(circle at 82% 12%,rgba(201,154,54,.12),transparent 34%),
+    linear-gradient(145deg,rgba(255,255,255,.02),rgba(201,154,54,.045));
   position:relative;
   overflow:hidden;
+  animation:letterFade .6s ease both;
 }
 .signature-letter::before{
   content:"“";
   position:absolute;
   left:14px;
-  top:-18px;
+  top:-20px;
   font-family:Georgia,serif;
-  font-size:92px;
-  color:rgba(240,207,117,.15);
+  font-size:94px;
+  color:rgba(240,207,117,.12);
 }
 .signature-letter h3{
   position:relative;
-  margin:0 0 12px;
+  margin:0 0 16px;
   font-family:Georgia,serif;
   font-weight:400;
   color:var(--gold2);
-  font-size:27px;
+  font-size:28px;
 }
 .signature-letter p{
   position:relative;
   margin:0;
   color:#e1d7c5;
-  line-height:1.72;
+  line-height:1.78;
 }
+.signature-paragraph{
+  display:block;
+  margin:0 0 14px;
+}
+.signature-paragraph:last-child{margin-bottom:0}
 .signature-closing{
   position:relative;
-  margin-top:20px;
-  padding-top:16px;
-  border-top:1px solid rgba(201,154,54,.24);
+  margin-top:22px;
+  padding-top:18px;
+  border-top:1px solid rgba(201,154,54,.18);
   text-align:right;
 }
 .signature-closing small{
   display:block;
-  margin-bottom:4px;
+  margin-bottom:2px;
   color:#b8ad99;
+  font-size:14px;
 }
 .signature-image{
   display:block;
-  width:min(310px,85%);
+  width:min(270px,72%);
   height:auto;
   margin:2px 0 0 auto;
   filter:invert(83%) sepia(43%) saturate(725%) hue-rotate(357deg) brightness(102%) contrast(90%);
+  animation:signatureIn .7s .35s ease both;
 }
 .signature-role{
-  margin-top:0;
-  color:#9f9584;
-  font-size:11px;
-  letter-spacing:.10em;
+  margin-top:-2px;
+  color:#887f70;
+  font-size:10px;
+  letter-spacing:.09em;
   text-transform:uppercase;
 }
+.signature-disclaimer{
+  margin-top:14px!important;
+  color:#81796d!important;
+  font-size:10px;
+  line-height:1.45!important;
+  text-align:right;
+}
+@keyframes letterFade{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:none}
+}
+@keyframes signatureIn{
+  from{opacity:0;transform:translateX(12px)}
+  to{opacity:1;transform:none}
+}
+@media(max-width:620px){
+  .signature-letter{padding:21px 18px}
+  .signature-image{width:min(245px,82%)}
+}
+
 
 </style>
 </head>
@@ -306,6 +335,7 @@ input:focus,select:focus{border-color:var(--gold2)}
         <small>Con stima,</small>
         <img class="signature-image" id="signatureImage" src="firma-elvis.png" alt="Firma Elvis Billeci">
         <div class="signature-role">Founder · Wedding Tattoo Experience</div>
+        <p class="signature-disclaimer">Consiglio elaborato sulla base dei dati inseriti e dei criteri Wedding Tattoo Experience.</p>
       </div>
     </section>
 
@@ -548,6 +578,25 @@ function recommend(calculated,tattoos,hoursNeeded,km){
 }
 
 
+
+function formatExpertAdvice(text){
+  const sentences=text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[text];
+  const groups=[];
+  let current=[];
+
+  sentences.forEach(sentence=>{
+    current.push(sentence.trim());
+    if(current.length===2){
+      groups.push(current.join(" "));
+      current=[];
+    }
+  });
+
+  if(current.length) groups.push(current.join(" "));
+
+  return groups.map(group=>`<span class="signature-paragraph">${group}</span>`).join("");
+}
+
 function addHours(time,decimalHours){
   const [h,m]=(time||"17:00").split(":").map(Number);
   const total=Math.round(h*60+m+decimalHours*60);
@@ -658,6 +707,9 @@ function downloadQuotePdf(){
       doc.setTextColor(170,160,144);
       doc.setFontSize(8);
       doc.text("Founder · Wedding Tattoo Experience",184,y,{align:"right"});
+      doc.setTextColor(125,118,108);
+      doc.setFontSize(7);
+      doc.text("Consiglio elaborato sulla base dei dati inseriti e dei criteri Wedding Tattoo Experience.",184,y+5,{align:"right"});
       y+=8;
     }catch(error){
       y+=4;
@@ -715,7 +767,7 @@ function performCalculation(){
     euro
   });
 
-  document.getElementById("personalAdvice").textContent=personalAdvice;
+  document.getElementById("personalAdvice").innerHTML=formatExpertAdvice(personalAdvice);
   buildCoverage(recommended,tattoos);
   buildTimeline(startTime,tattoos,hoursNeeded);
 
