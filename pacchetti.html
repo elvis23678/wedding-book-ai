@@ -88,6 +88,34 @@ input:focus,select:focus{border-color:var(--gold2)}
   .metrics{grid-template-columns:repeat(2,1fr)}
   .packages{grid-template-columns:1fr}
 }
+
+.analysis-overlay{
+  position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
+  padding:22px;background:rgba(0,0,0,.82);backdrop-filter:blur(10px)
+}
+.analysis-overlay.show{display:flex}
+.analysis-card{
+  width:min(520px,100%);border:1px solid rgba(201,154,54,.34);border-radius:24px;
+  background:linear-gradient(180deg,rgba(20,16,9,.98),rgba(5,5,5,.99));
+  padding:24px;box-shadow:0 30px 100px rgba(0,0,0,.75)
+}
+.analysis-card h2{margin:0 0 18px;font-family:Georgia,serif;font-weight:400;color:var(--gold2);font-size:28px}
+.analysis-step{display:flex;align-items:center;gap:11px;padding:10px 0;color:#b9af9f;transition:.25s}
+.analysis-step::before{
+  content:"";width:12px;height:12px;border-radius:50%;border:1px solid rgba(201,154,54,.45);
+  flex:0 0 auto
+}
+.analysis-step.active{color:#fff}
+.analysis-step.active::before{background:var(--gold);box-shadow:0 0 18px rgba(201,154,54,.45)}
+.analysis-step.done{color:#d9cfbd}
+.analysis-step.done::before{background:#4ac77b;border-color:#4ac77b}
+.advice-box{
+  margin:0 18px 20px;padding:18px;border:1px solid rgba(201,154,54,.28);
+  border-radius:18px;background:linear-gradient(135deg,rgba(201,154,54,.12),rgba(255,255,255,.02))
+}
+.advice-box h3{margin:0 0 8px;font-family:Georgia,serif;font-weight:400;color:var(--gold2);font-size:26px}
+.advice-box p{margin:0;color:#ded4c2;line-height:1.65}
+
 </style>
 </head>
 <body>
@@ -156,6 +184,12 @@ input:focus,select:focus{border-color:var(--gold2)}
     <div class="reasons">
       <h3>Perché te lo consigliamo</h3>
       <ul id="reasonsList"></ul>
+    </div>
+
+
+    <div class="advice-box">
+      <h3>Se fossi al tuo posto...</h3>
+      <p id="personalAdvice"></p>
     </div>
 
     <div class="cta-wrap">
@@ -260,7 +294,7 @@ function recommend(calculated,tattoos,hoursNeeded,km){
   return best;
 }
 
-function calculate(){
+function performCalculation(){
   const guests=Math.max(1,Number(document.getElementById("guests").value)||1);
   const interest=Math.max(0,Number(document.getElementById("interest").value)||0);
   const km=Math.max(0,Number(document.getElementById("km").value)||0);
@@ -278,6 +312,38 @@ function calculate(){
   document.getElementById("recommendedName").textContent="⭐ "+recommended.name;
   document.getElementById("recommendationText").textContent=
     `Con circa ${tattoos} tatuaggi previsti, ${hoursNeeded} ore necessarie e ${km} km di distanza, ${recommended.name} è la scelta più equilibrata considerando prezzo, ore incluse, trasferta e margine operativo.`;
+
+  const lowerPackage=recommended.id==="luxury"
+    ? calculated.find(p=>p.id==="signature")
+    : recommended.id==="signature"
+      ? calculated.find(p=>p.id==="essential")
+      : null;
+
+  let personalAdvice=`Sceglierei ${recommended.name}. `;
+  personalAdvice+=`Per il tuo matrimonio prevediamo circa ${tattoos} tatuaggi distribuiti in circa ${hoursNeeded} ore. `;
+
+  if(lowerPackage){
+    const difference=recommended.total-lowerPackage.total;
+    if(lowerPackage.extraHours>0){
+      personalAdvice+=`Con ${lowerPackage.name} servirebbero ${lowerPackage.extraHours} ore extra. `;
+    }
+    if(lowerPackage.extraKm>0){
+      personalAdvice+=`Inoltre supereresti di ${lowerPackage.extraKm} km la soglia di trasferta inclusa. `;
+    }
+    if(difference>0){
+      personalAdvice+=`La differenza economica è di circa ${euro(difference)}, ma ${recommended.name} offre più margine, meno rischio di attese e maggiore tranquillità. `;
+    }
+  }
+
+  if(recommended.id==="luxury"){
+    personalAdvice+="È la soluzione che consiglierei anche se fosse il matrimonio di un mio amico.";
+  }else if(recommended.id==="signature"){
+    personalAdvice+="È la scelta più equilibrata per evitare extra inutili senza rinunciare alla qualità dell’esperienza.";
+  }else{
+    personalAdvice+="Per un evento intimo è sufficiente e mantiene il miglior rapporto tra costo e servizio.";
+  }
+
+  document.getElementById("personalAdvice").textContent=personalAdvice;
 
   const packages=document.getElementById("packages");
   packages.innerHTML="";
@@ -390,7 +456,49 @@ Vorrei ricevere un preventivo definitivo.`;
   document.getElementById("result").scrollIntoView({behavior:"smooth",block:"start"});
 }
 
-document.getElementById("calculate").addEventListener("click",calculate);
+
+
+const analysisOverlay=document.getElementById("analysisOverlay");
+const analysisSteps=[...document.querySelectorAll(".analysis-step")];
+
+async function runAnalysis(){
+  analysisOverlay.classList.add("show");
+  analysisOverlay.setAttribute("aria-hidden","false");
+  analysisSteps.forEach(step=>step.classList.remove("active","done"));
+
+  for(let i=0;i<analysisSteps.length;i++){
+    if(i>0){
+      analysisSteps[i-1].classList.remove("active");
+      analysisSteps[i-1].classList.add("done");
+    }
+    analysisSteps[i].classList.add("active");
+    await new Promise(resolve=>setTimeout(resolve,420));
+  }
+
+  analysisSteps[analysisSteps.length-1].classList.remove("active");
+  analysisSteps[analysisSteps.length-1].classList.add("done");
+  await new Promise(resolve=>setTimeout(resolve,300));
+
+  performCalculation();
+
+  analysisOverlay.classList.remove("show");
+  analysisOverlay.setAttribute("aria-hidden","true");
+}
+
+document.getElementById("calculate").addEventListener("click",runAnalysis);
+
 </script>
+
+<div class="analysis-overlay" id="analysisOverlay" aria-hidden="true">
+  <div class="analysis-card">
+    <h2>Sto analizzando il tuo matrimonio...</h2>
+    <div class="analysis-step" data-step="0">Calcolo della distanza e della trasferta</div>
+    <div class="analysis-step" data-step="1">Stima del numero di tatuaggi</div>
+    <div class="analysis-step" data-step="2">Calcolo delle ore necessarie</div>
+    <div class="analysis-step" data-step="3">Confronto economico dei pacchetti</div>
+    <div class="analysis-step" data-step="4">Ricerca della soluzione con più valore</div>
+  </div>
+</div>
+
 </body>
 </html>
