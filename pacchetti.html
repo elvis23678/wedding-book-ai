@@ -244,6 +244,7 @@ input:focus,select:focus{border-color:var(--gold2)}
 </style>
 </head>
 <body>
+<img id="tbsSealImage" src="timbro-tbs.png" alt="" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
 <img id="officialLogoImage" src="logo-wedding-officiale.png" alt="" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
 <main class="wrap">
   <a class="back" href="index.html">← Torna al Wedding Book</a>
@@ -767,15 +768,24 @@ function downloadQuotePdf(){
   }
 
   function seal(x,y,text){
-    doc.setFillColor(173,124,48);
+    const sealImage=document.getElementById("tbsSealImage");
+    if(sealImage && sealImage.complete && sealImage.naturalWidth){
+      try{
+        doc.addImage(sealImage,"PNG",x-15,y-15,30,30,undefined,"FAST");
+        return;
+      }catch(error){}
+    }
+
+    // Fallback vettoriale.
+    doc.setFillColor(104,8,20);
     doc.circle(x,y,12,"F");
-    doc.setDrawColor(120,79,25);
+    doc.setDrawColor(55,0,8);
     doc.circle(x,y,12,"S");
     doc.circle(x,y,9.5,"S");
-    doc.setTextColor(255,246,221);
+    doc.setTextColor(55,0,8);
     doc.setFont("times","bold");
     doc.setFontSize(8);
-    doc.text(text,x,y+2.5,{align:"center"});
+    doc.text("TBS",x,y+2.5,{align:"center"});
   }
 
   function sectionTitle(title,y){
@@ -812,7 +822,7 @@ function downloadQuotePdf(){
   // PAGINA 1
   parchmentPage();
   header();
-  seal(174,72,"WTE");
+  seal(174,72,"TBS");
 
   let y=68;
   doc.setTextColor(...ink);
@@ -826,7 +836,7 @@ function downloadQuotePdf(){
   doc.text("Proposta personalizzata per il vostro matrimonio",20,y);
   doc.setFont("helvetica","normal");
   doc.setFontSize(7.5);
-  doc.text(`Documento riservato · ${proposalId}`,190,y,{align:"right"});
+  doc.text(`Documento autenticato con sigillo TBS · ${proposalId}`,190,y,{align:"right"});
   y+=14;
 
   doc.setFont("times","normal");
@@ -882,7 +892,7 @@ function downloadQuotePdf(){
   doc.addPage();
   parchmentPage();
   header();
-  seal(174,72,"SIGILLO");
+  seal(174,72,"TBS");
 
   y=68;
   doc.setTextColor(...ink);
