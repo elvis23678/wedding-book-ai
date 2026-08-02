@@ -1,24 +1,27 @@
-# Wedding Tattoo Experience — AI Chat
+# Wedding Tattoo Experience — Assistente guidato
 
-Progetto pronto per Render come **Web Service Node.js**.
+Versione senza OpenAI API, senza chiavi e senza costi a consumo.
 
-## Pubblicazione
+## Funzionamento
 
-1. Carica tutti i file di questo pacchetto nel repository GitHub.
-2. Su Render crea un nuovo **Web Service** collegato al repository.
-3. Imposta:
-   - Build Command: lascia vuoto
-   - Start Command: `npm start`
-4. In **Environment** aggiungi `OPENAI_API_KEY` con la tua chiave API OpenAI.
-5. Lascia `OPENAI_MODEL=gpt-5-mini` oppure sostituiscilo con un modello disponibile nel tuo progetto OpenAI.
-6. Esegui il deploy.
+L'assistente risponde automaticamente alle domande più comuni su:
 
-La chiave API non è contenuta nel sito e non viene mai inviata al browser.
+- pacchetti Bronze, Silver e Gold;
+- prezzi;
+- funzionamento del servizio;
+- tempi indicativi;
+- maggiorenni e zone escluse;
+- igiene e sicurezza;
+- aftercare;
+- disponibilità, preventivi e contatti.
 
-## Contatti configurati
+Le richieste specifiche vengono indirizzate allo staff tramite WhatsApp o telefono.
 
-- Telefono: 011 232456
-- WhatsApp: 347 7050250
-- Instagram: @tattoo.beautycondove
-- Sito: www.tattoobeautysaloon.it
-- Sede: Via Torino 1A, 10055 Condove (TO)
+## Pubblicazione su Render
+
+- Runtime: Node
+- Build Command: `npm install`
+- Start Command: `npm start`
+- Root Directory: vuota
+
+Non serve più la variabile `OPENAI_API_KEY`. Può essere eliminata da Render.
