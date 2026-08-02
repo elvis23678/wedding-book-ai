@@ -199,6 +199,16 @@ input:focus,select:focus{border-color:var(--gold2)}
   </section>
 </main>
 
+<div class="analysis-overlay" id="analysisOverlay" aria-hidden="true">
+  <div class="analysis-card">
+    <h2>Sto analizzando il tuo matrimonio...</h2>
+    <div class="analysis-step" data-step="0">Calcolo della distanza e della trasferta</div>
+    <div class="analysis-step" data-step="1">Stima del numero di tatuaggi</div>
+    <div class="analysis-step" data-step="2">Calcolo delle ore necessarie</div>
+    <div class="analysis-step" data-step="3">Confronto economico dei pacchetti</div>
+    <div class="analysis-step" data-step="4">Ricerca della soluzione con più valore</div>
+  </div>
+
 <script>
 const STUDIO = "Tattoo Beauty Saloon, Via Torino 1A, 10055 Condove TO";
 const EXTRA_HOUR_PRICE = 150;
@@ -488,16 +498,6 @@ async function runAnalysis(){
 document.getElementById("calculate").addEventListener("click",runAnalysis);
 
 </script>
-
-<div class="analysis-overlay" id="analysisOverlay" aria-hidden="true">
-  <div class="analysis-card">
-    <h2>Sto analizzando il tuo matrimonio...</h2>
-    <div class="analysis-step" data-step="0">Calcolo della distanza e della trasferta</div>
-    <div class="analysis-step" data-step="1">Stima del numero di tatuaggi</div>
-    <div class="analysis-step" data-step="2">Calcolo delle ore necessarie</div>
-    <div class="analysis-step" data-step="3">Confronto economico dei pacchetti</div>
-    <div class="analysis-step" data-step="4">Ricerca della soluzione con più valore</div>
-  </div>
 </div>
 
 </body>
