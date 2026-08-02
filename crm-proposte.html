@@ -456,7 +456,7 @@ function fillTemplate(template,item){
 }
 
 function getSelectedProposal(){
-  return read().find(x=>x.id===selectedId)||null;
+  return cached().find(x=>x.id===selectedId)||null;
 }
 
 function prepareWhatsAppMessage(statusOverride){
@@ -509,7 +509,7 @@ function resetTemplates(){
   prepareWhatsAppMessage();
 }
 
-function applyStatusAndPreview(){
+async function applyStatusAndPreview(){
   const newStatus=document.getElementById("whatsappStatus").value;
   updateSelected(item=>{
     const oldStatus=item.status;
@@ -521,7 +521,7 @@ function applyStatusAndPreview(){
   prepareWhatsAppMessage(newStatus);
 }
 
-function sendWhatsAppAndLog(){
+async function sendWhatsAppAndLog(){
   const item=getSelectedProposal();
   if(!item) return;
 
@@ -542,18 +542,15 @@ function sendWhatsAppAndLog(){
     return;
   }
 
-  const data=read();
-  const proposal=data.find(x=>x.id===selectedId);
-  if(!proposal) return;
+  await updateProposal(item.id,{
+    whatsappConsent:true,
+    lastWhatsAppMessage:message,
+    lastWhatsAppAt:new Date().toISOString(),
+    historyText:`Messaggio WhatsApp preparato e aperto per lo stato "${item.status}".`
+  });
 
-  proposal.whatsappConsent=true;
-  addHistory(proposal,"whatsapp",`Messaggio WhatsApp preparato e aperto per lo stato "${proposal.status}".`);
-  proposal.lastWhatsAppMessage=message;
-  proposal.lastWhatsAppAt=new Date().toISOString();
-  write(data);
-
-  render();
-  openProposal(proposal.id);
+  await render();
+  openProposal(item.id);
   prepareWhatsAppMessage();
 
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`,"_blank");
@@ -575,13 +572,50 @@ const euro=value=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"
 const date=value=>value?new Intl.DateTimeFormat("it-IT").format(new Date(value+"T12:00:00")):"Da definire";
 const dateTime=value=>value?new Intl.DateTimeFormat("it-IT",{dateStyle:"short",timeStyle:"short"}).format(new Date(value)):"";
 
-function read(){
-  try{
-    const data=JSON.parse(localStorage.getItem(KEY)||"[]");
-    return Array.isArray(data)?data:[];
-  }catch(error){return []}
+let proposalsCache=[];
+
+async function apiRequest(url,options={}){
+  const response=await fetch(url,{
+    credentials:"same-origin",
+    headers:{
+      "Content-Type":"application/json",
+      ...(options.headers||{})
+    },
+    ...options
+  });
+
+  if(response.status===401){
+    throw new Error("Accesso CRM non autorizzato");
+  }
+
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok) throw new Error(data.error||"Errore server");
+  return data;
 }
-function write(data){localStorage.setItem(KEY,JSON.stringify(data))}
+
+async function read(){
+  const data=await apiRequest("/api/admin/proposals");
+  proposalsCache=Array.isArray(data.proposals)?data.proposals:[];
+  return proposalsCache;
+}
+
+function cached(){
+  return proposalsCache;
+}
+
+async function updateProposal(id,patch){
+  const data=await apiRequest(`/api/admin/proposals/${encodeURIComponent(id)}`,{
+    method:"PATCH",
+    body:JSON.stringify(patch)
+  });
+  return data.proposal;
+}
+
+async function removeProposal(id){
+  await apiRequest(`/api/admin/proposals/${encodeURIComponent(id)}`,{
+    method:"DELETE"
+  });
+}
 function escapeHtml(value){
   return String(value??"").replace(/[&<>"']/g,char=>({
     "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
@@ -605,8 +639,19 @@ function addHistory(item,type,text){
   item.updatedAt=new Date().toISOString();
 }
 
-function render(){
-  const all=read();
+async function render(){
+  document.getElementById("empty").style.display="block";
+  document.getElementById("empty").textContent="Caricamento archivio…";
+
+  let all=[];
+  try{
+    all=await read();
+  }catch(error){
+    document.getElementById("rows").innerHTML="";
+    document.getElementById("empty").style.display="block";
+    document.getElementById("empty").textContent=error.message||"Impossibile caricare il CRM.";
+    return;
+  }
   const q=document.getElementById("search").value.trim().toLowerCase();
   const status=document.getElementById("statusFilter").value;
   const pkg=document.getElementById("packageFilter").value;
@@ -656,7 +701,7 @@ function render(){
 }
 
 function openProposal(id){
-  const item=read().find(x=>x.id===id);
+  const item=cached().find(x=>x.id===id);
   if(!item) return;
 
   selectedId=id;
@@ -712,19 +757,30 @@ function closeModal(){
   selectedId=null;
 }
 
-function updateSelected(mutator,historyText){
-  const data=read();
-  const item=data.find(x=>x.id===selectedId);
-  if(!item) return;
-  mutator(item);
-  if(historyText) addHistory(item,"update",historyText);
-  else item.updatedAt=new Date().toISOString();
-  write(data);
-  render();
-  openProposal(item.id);
+async function updateSelected(mutator,historyText){
+  const current=cached().find(x=>x.id===selectedId);
+  if(!current) return;
+
+  const draft=structuredClone(current);
+  mutator(draft);
+
+  await updateProposal(selectedId,{
+    status:draft.status,
+    phone:draft.phone,
+    email:draft.email,
+    birthDate:draft.birthDate,
+    weddingDate:draft.weddingDate,
+    location:draft.location,
+    notes:draft.notes,
+    whatsappConsent:draft.whatsappConsent,
+    historyText:historyText||null
+  });
+
+  await render();
+  openProposal(selectedId);
 }
 
-function saveCustomer(){
+async function saveCustomer(){
   const newStatus=document.getElementById("editStatus").value;
   updateSelected(item=>{
     const oldStatus=item.status;
@@ -740,40 +796,46 @@ function saveCustomer(){
   },"Dati cliente aggiornati.");
 }
 
-function saveNotes(){
+async function saveNotes(){
   updateSelected(item=>{
     item.notes=document.getElementById("editNotes").value.trim();
   },"Note interne aggiornate.");
 }
 
-function addQuickEvent(text){
+async function addQuickEvent(text){
   updateSelected(item=>{
     addHistory(item,"event",text+".");
   });
 }
 
-function duplicateProposal(){
-  const data=read();
-  const source=data.find(x=>x.id===selectedId);
+async function duplicateProposal(){
+  const source=cached().find(x=>x.id===selectedId);
   if(!source) return;
-  const now=new Date();
-  const copy=structuredClone(source);
-  copy.id=`WTE-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
-  copy.names=source.names+" · Copia";
-  copy.status="Bozza";
-  copy.createdAt=copy.updatedAt=now.toISOString();
-  copy.history=[];
-  addHistory(copy,"duplicate",`Proposta duplicata da ${source.id}.`);
-  data.unshift(copy);
-  write(data);
-  render();
+
+  const payload={
+    ...source,
+    id:null,
+    names:source.names+" · Copia",
+    status:"Bozza",
+    history:[]
+  };
+
+  delete payload.createdAt;
+  delete payload.updatedAt;
+
+  await apiRequest("/api/admin/proposals",{
+    method:"POST",
+    body:JSON.stringify(payload)
+  });
+
+  await render();
   closeModal();
 }
 
-function deleteProposal(){
+async function deleteProposal(){
   if(!confirm("Eliminare definitivamente questa proposta?")) return;
-  write(read().filter(x=>x.id!==selectedId));
-  render();
+  await removeProposal(selectedId);
+  await render();
   closeModal();
 }
 
@@ -783,7 +845,7 @@ function openWhatsApp(){
 }
 
 function exportBackup(){
-  const blob=new Blob([JSON.stringify(read(),null,2)],{type:"application/json"});
+  const blob=new Blob([JSON.stringify(cached(),null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
   a.href=url;
@@ -794,13 +856,18 @@ function exportBackup(){
 
 function importBackup(file){
   const reader=new FileReader();
-  reader.onload=()=>{
+  reader.onload=async()=>{
     try{
       const parsed=JSON.parse(reader.result);
       if(!Array.isArray(parsed)) throw new Error("Formato non valido");
-      if(!confirm(`Importare ${parsed.length} proposte e sostituire l’archivio attuale?`)) return;
-      write(parsed);
-      render();
+      if(!confirm(`Importare ${parsed.length} proposte nel CRM centrale?`)) return;
+
+      await apiRequest("/api/admin/proposals/import",{
+        method:"POST",
+        body:JSON.stringify({proposals:parsed})
+      });
+
+      await render();
       alert("Backup importato correttamente.");
     }catch(error){
       alert("Il file selezionato non è un backup CRM valido.");
@@ -852,13 +919,11 @@ document.getElementById("copyWhatsAppMessage").addEventListener("click",copyWhat
 document.getElementById("resetWhatsAppMessage").addEventListener("click",()=>prepareWhatsAppMessage());
 document.getElementById("saveTemplates").addEventListener("click",saveTemplates);
 document.getElementById("resetTemplates").addEventListener("click",resetTemplates);
-document.getElementById("whatsappConsent").addEventListener("change",event=>{
-  const data=read();
-  const item=data.find(x=>x.id===selectedId);
-  if(!item) return;
-  item.whatsappConsent=event.target.checked;
-  item.updatedAt=new Date().toISOString();
-  write(data);
+document.getElementById("whatsappConsent").addEventListener("change",async event=>{
+  if(!selectedId) return;
+  await updateProposal(selectedId,{whatsappConsent:event.target.checked});
+  await render();
+  openProposal(selectedId);
 });
 
 render();

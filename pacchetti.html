@@ -1397,49 +1397,16 @@ async function runAnalysis(){
   await new Promise(resolve=>setTimeout(resolve,300));
 
   performCalculation();
-  saveProposalToCrm();
+  await saveProposalToCrm();
 
   analysisOverlay.classList.remove("show");
   analysisOverlay.setAttribute("aria-hidden","true");
 }
 
 
-const WTE_CRM_KEY="wte_crm_proposals_v2";
+const WTE_API="/api/proposals";
 
-function crmRead(){
-  try{
-    const data=JSON.parse(localStorage.getItem(WTE_CRM_KEY)||"[]");
-    return Array.isArray(data)?data:[];
-  }catch(error){
-    return [];
-  }
-}
-
-function crmWrite(data){
-  localStorage.setItem(WTE_CRM_KEY,JSON.stringify(data));
-}
-
-function crmProposalId(){
-  const now=new Date();
-  const stamp=[
-    now.getFullYear(),
-    String(now.getMonth()+1).padStart(2,"0"),
-    String(now.getDate()).padStart(2,"0")
-  ].join("");
-  return `WTE-${stamp}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
-}
-
-function crmAddHistory(proposal,type,text){
-  proposal.history=Array.isArray(proposal.history)?proposal.history:[];
-  proposal.history.unshift({
-    id:crypto?.randomUUID?.()||Math.random().toString(36).slice(2),
-    at:new Date().toISOString(),
-    type,
-    text
-  });
-}
-
-function saveProposalToCrm(){
+async function saveProposalToCrm(){
   const statusEl=document.getElementById("crmAutoStatus");
 
   if(!currentQuote){
@@ -1447,29 +1414,21 @@ function saveProposalToCrm(){
     return;
   }
 
-  const archive=crmRead();
-  const now=new Date().toISOString();
-  const existingId=currentQuote.crmId;
-  const previous=existingId?archive.find(item=>item.id===existingId):null;
-  const id=existingId||crmProposalId();
   const total=Number(currentQuote.recommended.total)||0;
   const deposit=Math.round(total*DEPOSIT_PERCENT/100);
 
-  const proposal={
-    id,
+  const payload={
+    id:currentQuote.crmId||null,
     version:"WTE Proposal v1.0",
-    createdAt:previous?.createdAt||now,
-    updatedAt:now,
-    status:previous?.status||"Nuova richiesta",
+    status:"Nuova richiesta",
     names:currentQuote.names||"Cliente non indicato",
     firstName:currentQuote.firstName||"",
     lastName:currentQuote.lastName||"",
     birthDate:currentQuote.birthDate||"",
     partnerName:currentQuote.partnerName||"",
-    phone:currentQuote.phone||previous?.phone||"",
-    email:currentQuote.email||previous?.email||"",
+    phone:currentQuote.phone||"",
+    email:currentQuote.email||"",
     contactConsent:Boolean(currentQuote.consent),
-    consentAt:previous?.consentAt||(currentQuote.consent?now:""),
     weddingDate:currentQuote.date||"",
     startTime:currentQuote.startTime||"",
     location:currentQuote.location||"",
@@ -1489,27 +1448,34 @@ function saveProposalToCrm(){
     extraKmCost:Number(currentQuote.recommended.extraKmCost)||0,
     includedHours:Number(currentQuote.recommended.hours)||0,
     includedKm:currentQuote.recommended.includedKm,
-    advice:currentQuote.advice||"",
-    notes:previous?.notes||"",
-    attachments:previous?.attachments||[],
-    history:previous?.history||[]
+    advice:currentQuote.advice||""
   };
 
-  crmAddHistory(
-    proposal,
-    previous?"update":"create",
-    previous?"Richiesta aggiornata automaticamente dal configuratore.":"Nuova richiesta acquisita automaticamente dal configuratore."
-  );
+  try{
+    if(statusEl) statusEl.textContent="Registrazione richiesta in corso…";
 
-  const index=archive.findIndex(item=>item.id===id);
-  if(index>=0) archive[index]=proposal;
-  else archive.unshift(proposal);
+    const response=await fetch(WTE_API,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload)
+    });
 
-  crmWrite(archive);
-  currentQuote.crmId=id;
+    const data=await response.json().catch(()=>({}));
 
-  if(statusEl){
-    statusEl.textContent=`Richiesta registrata con codice ${id}`;
+    if(!response.ok){
+      throw new Error(data.error||"Errore durante il salvataggio");
+    }
+
+    currentQuote.crmId=data.proposal.id;
+
+    if(statusEl){
+      statusEl.textContent=`Richiesta registrata con codice ${data.proposal.id}`;
+    }
+  }catch(error){
+    console.error(error);
+    if(statusEl){
+      statusEl.textContent="Richiesta non registrata. Contattaci su WhatsApp.";
+    }
   }
 }
 

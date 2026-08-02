@@ -1,181 +1,411 @@
-'use strict';
+import express from "express";
+import pg from "pg";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import path from "path";
+import crypto from "crypto";
+import { fileURLToPath } from "url";
 
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+const {Pool}=pg;
+const __filename=fileURLToPath(import.meta.url);
+const __dirname=path.dirname(__filename);
 
-const PORT = Number(process.env.PORT || 3000);
-const ROOT = __dirname;
-const MAX_BODY = 32 * 1024;
-const rate = new Map();
+const app=express();
+const PORT=Number(process.env.PORT||3000);
 
-const MIME = {
-  '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.webp': 'image/webp',
-  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml',
-  '.json': 'application/json; charset=utf-8', '.md': 'text/markdown; charset=utf-8'
-};
-
-const WHATSAPP = 'https://wa.me/393477050250?text=';
-
-function json(res, status, data) {
-  const body = JSON.stringify(data);
-  res.writeHead(status, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Cache-Control': 'no-store',
-    'X-Content-Type-Options': 'nosniff',
-    'Content-Security-Policy': "default-src 'none'"
-  });
-  res.end(body);
+if(!process.env.DATABASE_URL){
+  console.error("DATABASE_URL non configurato.");
+  process.exit(1);
 }
 
-function clientId(req) {
-  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
-  return crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
-}
-
-function allowed(req) {
-  const id = clientId(req), now = Date.now(), windowMs = 60_000, max = 30;
-  const item = rate.get(id) || { start: now, count: 0 };
-  if (now - item.start > windowMs) { item.start = now; item.count = 0; }
-  item.count += 1; rate.set(id, item);
-  return item.count <= max;
-}
-
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    let size = 0, chunks = [];
-    req.on('data', chunk => {
-      size += chunk.length;
-      if (size > MAX_BODY) { reject(new Error('BODY_TOO_LARGE')); req.destroy(); return; }
-      chunks.push(chunk);
-    });
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-    req.on('error', reject);
-  });
-}
-
-function normalize(value) {
-  return String(value || '')
-    .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9€+\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function hasAny(text, words) { return words.some(word => text.includes(word)); }
-
-function answer(message) {
-  const q = normalize(message);
-
-  if (!q) return 'Scrivi una domanda sul servizio Wedding Tattoo Experience.';
-
-  if (hasAny(q, ['ciao', 'salve', 'buongiorno', 'buonasera', 'hey'])) {
-    return 'Ciao! Posso aiutarti con prezzi, pacchetti, funzionamento, sicurezza, aftercare e contatti. Per verificare una data o ricevere un preventivo definitivo, ti metto subito in contatto con lo staff.';
-  }
-
-  if (hasAny(q, ['bronze', '790'])) {
-    return 'Il pacchetto Bronze costa 790 € + IVA. Comprende allestimento base, roll-up personalizzato, flash selezionati, 1 artista tatuatore, kit aftercare basic e assistenza dedicata. Dettagli finali e disponibilità vanno confermati con lo staff.';
-  }
-  if (hasAny(q, ['silver', '1090', '1.090'])) {
-    return 'Il pacchetto Silver costa 1.090 € + IVA. Comprende allestimento completo, roll-up e fondale, flash premium, 2 artisti tatuatori, kit aftercare premium, assistenza dedicata e welcome sign personalizzato.';
-  }
-  if (hasAny(q, ['gold', '1690', '1.690'])) {
-    return 'Il pacchetto Gold costa 1.690 € + IVA. È l’esperienza più completa: allestimento Deluxe, roll-up, fondale e luci, flash esclusivi, 2 artisti senior, kit aftercare premium, welcome sign personalizzato, servizio foto dedicato e assistenza prioritaria.';
-  }
-  if (hasAny(q, ['prezzo', 'prezzi', 'quanto costa', 'costo', 'pacchetti', 'offerta'])) {
-    return 'Sono disponibili tre pacchetti: Bronze 790 € + IVA, Silver 1.090 € + IVA e Gold 1.690 € + IVA. Ogni proposta è personalizzabile; il preventivo definitivo viene confermato dallo staff.';
-  }
-
-  if (hasAny(q, ['come funziona', 'funzionamento', 'organizzate', 'svolge', 'servizio'])) {
-    return 'Il percorso è semplice: primo contatto per capire evento e spazi, definizione del pacchetto, allestimento del corner durante il matrimonio e consegna del kit aftercare a ogni ospite tatuato. Il team gestisce tutto con discrezione e professionalità.';
-  }
-  if (hasAny(q, ['comprende', 'incluso', 'inclusi', 'cosa include'])) {
-    return 'Il servizio può comprendere allestimento, roll-up, fondale, selezione flash, uno o più tatuatori, kit aftercare e assistenza. La dotazione precisa dipende dal pacchetto scelto.';
-  }
-  if (hasAny(q, ['quanto dura', 'tempo', 'minuti', 'veloce'])) {
-    return 'I tatuaggi proposti sono piccoli e rapidi. In genere richiedono circa 5–15 minuti, ma il tempo effettivo dipende dal disegno e dalla zona scelta.';
-  }
-  if (hasAny(q, ['quanti tatuaggi', 'numero tatuaggi', 'quante persone', 'quanti ospiti'])) {
-    return 'Il numero di tatuaggi realizzabili dipende dalla durata dell’evento, dai disegni scelti e dal numero di artisti presenti. Per una stima attendibile servono data, orari e numero indicativo di ospiti interessati.';
-  }
-
-  if (hasAny(q, ['maggiorenne', 'maggiorenni', '18', 'eta', 'documento', 'minorenne'])) {
-    return 'Possono tatuarsi esclusivamente persone maggiorenni, con documento di identità valido. Non vengono eseguiti tatuaggi sui minorenni.';
-  }
-  if (hasAny(q, ['dove tatuate', 'zone', 'mani', 'dita', 'collo', 'viso', 'testa', 'fineline'])) {
-    return 'Per motivi estetici e professionali non vengono tatuati mani, dita, collo, viso o testa. Il servizio non propone fineline; lo staff aiuta a scegliere una zona adatta e sicura.';
-  }
-  if (hasAny(q, ['sicuro', 'sicurezza', 'igiene', 'sterile', 'sterilizzazione', 'monouso', 'normative'])) {
-    return 'Sì. Vengono utilizzati materiali monouso e certificati, barriere protettive e procedure igieniche professionali. Le superfici e le attrezzature sono preparate e sanificate secondo le procedure previste.';
-  }
-  if (hasAny(q, ['male', 'dolore', 'doloroso'])) {
-    return 'Il dolore è soggettivo, ma i flash sono piccoli e veloci e risultano generalmente ben tollerati. Per dubbi sanitari specifici è sempre meglio confrontarsi con un medico e con lo staff.';
-  }
-  if (hasAny(q, ['aftercare', 'cura', 'guarigione', 'crema', 'lavare'])) {
-    return 'Ogni tatuaggio include indicazioni di cura e kit aftercare. In generale va lavato delicatamente, idratato con il prodotto indicato, protetto da sole, mare e piscina durante la guarigione e non va grattato.';
-  }
-
-  if (hasAny(q, ['data', 'disponibile', 'disponibilita', 'prenotare', 'prenotazione', 'preventivo'])) {
-    return 'Per verificare la disponibilità o ricevere un preventivo servono: data dell’evento, località, orari indicativi e numero stimato di ospiti interessati. Invia queste informazioni su WhatsApp al 347 7050250.';
-  }
-  if (hasAny(q, ['trasferta', 'fuori', 'distanza', 'localita', 'dove venite'])) {
-    return 'Le trasferte e le condizioni logistiche vengono valutate caso per caso. Scrivi allo staff indicando località, data e orari dell’evento per ricevere una conferma precisa.';
-  }
-  if (hasAny(q, ['personalizzato', 'personalizzare', 'disegno mio', 'idea personale', 'flash'])) {
-    return 'Sono disponibili numerosi flash piccoli, eleganti e adatti all’evento. Eventuali richieste personalizzate devono essere concordate prima con lo staff e valutate in base a dimensione, stile e tempi.';
-  }
-
-  if (hasAny(q, ['whatsapp', 'telefono', 'contatto', 'chiamare', 'instagram', 'sito', 'indirizzo', 'dove siete'])) {
-    return 'Puoi contattarci al telefono 011 232456 o su WhatsApp al 347 7050250. Instagram: @tattoo.beautycondove. Sito: www.tattoobeautysaloon.it. Siamo in Via Torino 1A, 10055 Condove (TO).';
-  }
-
-  if (hasAny(q, ['grazie', 'perfetto', 'ok', 'va bene'])) {
-    return 'Con piacere! Per disponibilità, preventivo definitivo o richieste personalizzate puoi scrivere direttamente allo staff su WhatsApp al 347 7050250.';
-  }
-
-  return 'Posso rispondere a domande su prezzi, pacchetti, funzionamento, tempi, sicurezza, zone tatuabili e aftercare. Per questa richiesta specifica è meglio parlare direttamente con lo staff su WhatsApp al 347 7050250.';
-}
-
-async function handleChat(req, res) {
-  if (!allowed(req)) return json(res, 429, { error: 'Troppe richieste. Riprova tra un minuto.' });
-  let payload;
-  try { payload = JSON.parse(await readBody(req)); }
-  catch (e) { return json(res, e.message === 'BODY_TOO_LARGE' ? 413 : 400, { error: 'Richiesta non valida.' }); }
-  const message = typeof payload.message === 'string' ? payload.message.trim().slice(0, 600) : '';
-  if (!message) return json(res, 400, { error: 'Scrivi un messaggio.' });
-  return json(res, 200, { reply: answer(message), mode: 'guided' });
-}
-
-function serveFile(req, res) {
-  let pathname;
-  try { pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
-  catch { res.writeHead(400); return res.end('Bad Request'); }
-  if (pathname === '/') pathname = '/index.html';
-  const file = path.resolve(ROOT, '.' + pathname);
-  if (!file.startsWith(ROOT + path.sep)) { res.writeHead(403); return res.end('Forbidden'); }
-  fs.stat(file, (err, stat) => {
-    if (err || !stat.isFile()) { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end('Not Found'); }
-    const ext = path.extname(file).toLowerCase();
-    const headers = {
-      'Content-Type': MIME[ext] || 'application/octet-stream',
-      'X-Content-Type-Options': 'nosniff',
-      'Referrer-Policy': 'strict-origin-when-cross-origin',
-      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
-    };
-    headers['Cache-Control'] = ext === '.html' ? 'no-cache' : 'public, max-age=604800, immutable';
-    res.writeHead(200, headers);
-    fs.createReadStream(file).pipe(res);
-  });
-}
-
-const server = http.createServer(async (req, res) => {
-  if (req.method === 'GET' && req.url === '/health') return json(res, 200, { ok: true, chatConfigured: true, mode: 'guided-no-api' });
-  if (req.method === 'POST' && req.url === '/api/chat') return handleChat(req, res);
-  if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); return res.end('Method Not Allowed'); }
-  serveFile(req, res);
+const pool=new Pool({
+  connectionString:process.env.DATABASE_URL,
+  ssl:process.env.NODE_ENV==="production"
+    ? {rejectUnauthorized:false}
+    : false
 });
 
-server.listen(PORT, '0.0.0.0', () => console.log(`Wedding Book guided assistant running on port ${PORT}`));
+app.set("trust proxy",1);
+app.use(helmet({
+  contentSecurityPolicy:false,
+  crossOriginEmbedderPolicy:false
+}));
+app.use(express.json({limit:"1mb"}));
+
+const publicLimiter=rateLimit({
+  windowMs:15*60*1000,
+  max:60,
+  standardHeaders:true,
+  legacyHeaders:false
+});
+app.use("/api/proposals",publicLimiter);
+
+function text(value,max=500){
+  return String(value??"").trim().slice(0,max);
+}
+function number(value,min=0,max=1000000){
+  const n=Number(value);
+  if(!Number.isFinite(n)) return min;
+  return Math.min(max,Math.max(min,n));
+}
+function boolean(value){
+  return value===true||value==="true";
+}
+function validDate(value){
+  const v=text(value,10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(v)?v:null;
+}
+function proposalId(){
+  const now=new Date();
+  const stamp=[
+    now.getUTCFullYear(),
+    String(now.getUTCMonth()+1).padStart(2,"0"),
+    String(now.getUTCDate()).padStart(2,"0")
+  ].join("");
+  return `WTE-${stamp}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+}
+function isAdult(dateString){
+  if(!dateString) return false;
+  const birth=new Date(`${dateString}T12:00:00Z`);
+  if(Number.isNaN(birth.getTime())) return false;
+  const now=new Date();
+  let age=now.getUTCFullYear()-birth.getUTCFullYear();
+  const beforeBirthday=
+    now.getUTCMonth()<birth.getUTCMonth()||
+    (now.getUTCMonth()===birth.getUTCMonth()&&now.getUTCDate()<birth.getUTCDate());
+  if(beforeBirthday) age--;
+  return age>=18;
+}
+function secureEqual(a,b){
+  const aBuffer=Buffer.from(String(a));
+  const bBuffer=Buffer.from(String(b));
+  if(aBuffer.length!==bBuffer.length) return false;
+  return crypto.timingSafeEqual(aBuffer,bBuffer);
+}
+function adminAuth(req,res,next){
+  const expectedUser=process.env.CRM_USER;
+  const expectedPassword=process.env.CRM_PASSWORD;
+
+  if(!expectedUser||!expectedPassword){
+    return res.status(503).json({error:"Credenziali CRM non configurate"});
+  }
+
+  const header=req.headers.authorization||"";
+  if(!header.startsWith("Basic ")){
+    res.set("WWW-Authenticate",'Basic realm="WTE CRM"');
+    return res.status(401).json({error:"Autenticazione richiesta"});
+  }
+
+  const decoded=Buffer.from(header.slice(6),"base64").toString("utf8");
+  const split=decoded.indexOf(":");
+  const user=split>=0?decoded.slice(0,split):"";
+  const password=split>=0?decoded.slice(split+1):"";
+
+  if(!secureEqual(user,expectedUser)||!secureEqual(password,expectedPassword)){
+    res.set("WWW-Authenticate",'Basic realm="WTE CRM"');
+    return res.status(401).json({error:"Credenziali non valide"});
+  }
+
+  next();
+}
+
+async function initDb(){
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS proposals (
+      id TEXT PRIMARY KEY,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      status TEXT NOT NULL DEFAULT 'Nuova richiesta',
+      data JSONB NOT NULL DEFAULT '{}'::jsonb,
+      history JSONB NOT NULL DEFAULT '[]'::jsonb
+    );
+    CREATE INDEX IF NOT EXISTS idx_proposals_updated_at
+      ON proposals(updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_proposals_status
+      ON proposals(status);
+  `);
+}
+
+function normalizeProposal(input={},forcedId=null){
+  const firstName=text(input.firstName,80);
+  const lastName=text(input.lastName,80);
+  const birthDate=validDate(input.birthDate);
+  const phone=text(input.phone,40).replace(/[^\d+ ]/g,"");
+  const email=text(input.email,180).toLowerCase();
+  const consent=boolean(input.contactConsent);
+
+  if(!firstName||!lastName){
+    const error=new Error("Nome e cognome sono obbligatori");
+    error.status=400; throw error;
+  }
+  if(!birthDate||!isAdult(birthDate)){
+    const error=new Error("Il richiedente deve essere maggiorenne");
+    error.status=400; throw error;
+  }
+  if(phone.replace(/\D/g,"").length<9){
+    const error=new Error("Numero di cellulare non valido");
+    error.status=400; throw error;
+  }
+  if(!consent){
+    const error=new Error("Consenso al contatto obbligatorio");
+    error.status=400; throw error;
+  }
+
+  const id=forcedId||text(input.id,50)||proposalId();
+  const names=text(input.names,180)||[firstName,lastName].join(" ");
+
+  return {
+    id,
+    status:text(input.status,50)||"Nuova richiesta",
+    data:{
+      version:text(input.version,50)||"WTE Proposal v1.0",
+      names,
+      firstName,
+      lastName,
+      birthDate,
+      partnerName:text(input.partnerName,120),
+      phone,
+      email,
+      contactConsent:consent,
+      consentAt:text(input.consentAt,40)||new Date().toISOString(),
+      weddingDate:validDate(input.weddingDate)||"",
+      startTime:text(input.startTime,10),
+      location:text(input.location,240),
+      km:number(input.km,0,5000),
+      guests:number(input.guests,0,10000),
+      interest:number(input.interest,0,100),
+      tattoos:number(input.tattoos,0,10000),
+      hoursNeeded:number(input.hoursNeeded,0,1000),
+      packageId:text(input.packageId,50),
+      packageName:text(input.packageName,80),
+      basePrice:number(input.basePrice),
+      total:number(input.total),
+      deposit:number(input.deposit),
+      extraHours:number(input.extraHours,0,1000),
+      extraHourCost:number(input.extraHourCost),
+      extraKm:number(input.extraKm,0,10000),
+      extraKmCost:number(input.extraKmCost),
+      includedHours:number(input.includedHours,0,1000),
+      includedKm:input.includedKm===null?null:number(input.includedKm,0,10000),
+      advice:text(input.advice,4000),
+      notes:text(input.notes,10000),
+      whatsappConsent:boolean(input.whatsappConsent),
+      lastWhatsAppMessage:text(input.lastWhatsAppMessage,4000),
+      lastWhatsAppAt:text(input.lastWhatsAppAt,40)
+    }
+  };
+}
+
+function rowToProposal(row){
+  return {
+    id:row.id,
+    createdAt:row.created_at,
+    updatedAt:row.updated_at,
+    status:row.status,
+    ...row.data,
+    history:Array.isArray(row.history)?row.history:[]
+  };
+}
+
+app.post("/api/proposals",async(req,res,next)=>{
+  try{
+    const normalized=normalizeProposal(req.body);
+    const event={
+      id:crypto.randomUUID(),
+      at:new Date().toISOString(),
+      type:"create",
+      text:"Nuova richiesta acquisita dal configuratore."
+    };
+
+    const result=await pool.query(`
+      INSERT INTO proposals(id,status,data,history)
+      VALUES($1,$2,$3::jsonb,$4::jsonb)
+      ON CONFLICT(id) DO UPDATE SET
+        status=EXCLUDED.status,
+        data=proposals.data || EXCLUDED.data,
+        updated_at=NOW(),
+        history=proposals.history || $5::jsonb
+      RETURNING *
+    `,[
+      normalized.id,
+      normalized.status,
+      JSON.stringify(normalized.data),
+      JSON.stringify([event]),
+      JSON.stringify([{
+        ...event,
+        id:crypto.randomUUID(),
+        text:"Richiesta aggiornata dal configuratore."
+      }])
+    ]);
+
+    res.status(201).json({proposal:rowToProposal(result.rows[0])});
+  }catch(error){next(error)}
+});
+
+app.get("/api/admin/proposals",adminAuth,async(req,res,next)=>{
+  try{
+    const result=await pool.query(
+      "SELECT * FROM proposals ORDER BY updated_at DESC"
+    );
+    res.json({proposals:result.rows.map(rowToProposal)});
+  }catch(error){next(error)}
+});
+
+app.post("/api/admin/proposals",adminAuth,async(req,res,next)=>{
+  try{
+    const normalized=normalizeProposal({...req.body,id:null});
+    const event={
+      id:crypto.randomUUID(),
+      at:new Date().toISOString(),
+      type:"create",
+      text:"Proposta creata dal CRM."
+    };
+
+    const result=await pool.query(`
+      INSERT INTO proposals(id,status,data,history)
+      VALUES($1,$2,$3::jsonb,$4::jsonb)
+      RETURNING *
+    `,[
+      normalized.id,
+      normalized.status,
+      JSON.stringify(normalized.data),
+      JSON.stringify([event])
+    ]);
+
+    res.status(201).json({proposal:rowToProposal(result.rows[0])});
+  }catch(error){next(error)}
+});
+
+app.patch("/api/admin/proposals/:id",adminAuth,async(req,res,next)=>{
+  try{
+    const id=text(req.params.id,50);
+    const found=await pool.query("SELECT * FROM proposals WHERE id=$1",[id]);
+    if(!found.rowCount) return res.status(404).json({error:"Proposta non trovata"});
+
+    const current=rowToProposal(found.rows[0]);
+    const patch=req.body||{};
+    const allowedData=[
+      "phone","email","birthDate","weddingDate","location","notes",
+      "whatsappConsent","lastWhatsAppMessage","lastWhatsAppAt"
+    ];
+
+    const nextData={...found.rows[0].data};
+    for(const key of allowedData){
+      if(Object.prototype.hasOwnProperty.call(patch,key)){
+        nextData[key]=patch[key];
+      }
+    }
+
+    const nextStatus=text(patch.status,50)||current.status;
+    const history=Array.isArray(found.rows[0].history)?found.rows[0].history:[];
+    const historyText=text(patch.historyText,1000);
+
+    if(historyText){
+      history.unshift({
+        id:crypto.randomUUID(),
+        at:new Date().toISOString(),
+        type:"update",
+        text:historyText
+      });
+    }
+
+    if(nextStatus!==current.status){
+      history.unshift({
+        id:crypto.randomUUID(),
+        at:new Date().toISOString(),
+        type:"status",
+        text:`Stato modificato: ${current.status} → ${nextStatus}.`
+      });
+    }
+
+    const result=await pool.query(`
+      UPDATE proposals
+      SET status=$2,data=$3::jsonb,history=$4::jsonb,updated_at=NOW()
+      WHERE id=$1
+      RETURNING *
+    `,[id,nextStatus,JSON.stringify(nextData),JSON.stringify(history)]);
+
+    res.json({proposal:rowToProposal(result.rows[0])});
+  }catch(error){next(error)}
+});
+
+app.delete("/api/admin/proposals/:id",adminAuth,async(req,res,next)=>{
+  try{
+    const result=await pool.query(
+      "DELETE FROM proposals WHERE id=$1 RETURNING id",
+      [text(req.params.id,50)]
+    );
+    if(!result.rowCount) return res.status(404).json({error:"Proposta non trovata"});
+    res.json({ok:true});
+  }catch(error){next(error)}
+});
+
+app.post("/api/admin/proposals/import",adminAuth,async(req,res,next)=>{
+  const client=await pool.connect();
+  try{
+    const proposals=Array.isArray(req.body?.proposals)?req.body.proposals:[];
+    if(proposals.length>2000){
+      return res.status(400).json({error:"Backup troppo grande"});
+    }
+
+    await client.query("BEGIN");
+    for(const raw of proposals){
+      const normalized=normalizeProposal(raw,raw.id||null);
+      const history=Array.isArray(raw.history)?raw.history:[];
+      await client.query(`
+        INSERT INTO proposals(id,status,data,history,created_at,updated_at)
+        VALUES($1,$2,$3::jsonb,$4::jsonb,COALESCE($5::timestamptz,NOW()),COALESCE($6::timestamptz,NOW()))
+        ON CONFLICT(id) DO UPDATE SET
+          status=EXCLUDED.status,
+          data=EXCLUDED.data,
+          history=EXCLUDED.history,
+          updated_at=EXCLUDED.updated_at
+      `,[
+        normalized.id,
+        normalized.status,
+        JSON.stringify(normalized.data),
+        JSON.stringify(history),
+        raw.createdAt||null,
+        raw.updatedAt||null
+      ]);
+    }
+    await client.query("COMMIT");
+    res.json({ok:true,imported:proposals.length});
+  }catch(error){
+    await client.query("ROLLBACK");
+    next(error);
+  }finally{
+    client.release();
+  }
+});
+
+app.get("/api/health",async(req,res)=>{
+  const result=await pool.query("SELECT NOW() AS now");
+  res.json({ok:true,database:true,time:result.rows[0].now});
+});
+
+app.use(express.static(__dirname,{
+  extensions:["html"],
+  maxAge:process.env.NODE_ENV==="production"?"1h":0
+}));
+
+app.get("*",(req,res)=>{
+  res.sendFile(path.join(__dirname,"index.html"));
+});
+
+app.use((error,req,res,next)=>{
+  console.error(error);
+  const status=error.status||500;
+  res.status(status).json({
+    error:status===500?"Errore interno del server":error.message
+  });
+});
+
+initDb()
+  .then(()=>{
+    app.listen(PORT,()=>console.log(`WTE server attivo sulla porta ${PORT}`));
+  })
+  .catch(error=>{
+    console.error("Errore inizializzazione database:",error);
+    process.exit(1);
+  });
