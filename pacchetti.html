@@ -244,6 +244,7 @@ input:focus,select:focus{border-color:var(--gold2)}
 </style>
 </head>
 <body>
+<img id="officialLogoImage" src="logo-wedding-officiale.png" alt="" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
 <main class="wrap">
   <a class="back" href="index.html">← Torna al Wedding Book</a>
 
@@ -738,15 +739,31 @@ function downloadQuotePdf(){
   }
 
   function header(){
+    const officialLogo=document.getElementById("officialLogoImage");
+
+    if(officialLogo && officialLogo.complete && officialLogo.naturalWidth){
+      try{
+        // Logo originale, non ridisegnato.
+        doc.addImage(officialLogo,"PNG",77,15,56,32,undefined,"FAST");
+      }catch(error){
+        doc.setTextColor(...antiqueGold);
+        doc.setFont("times","bold");
+        doc.setFontSize(20);
+        doc.text("WEDDING TATTOO EXPERIENCE",105,25,{align:"center"});
+      }
+    }else{
+      doc.setTextColor(...antiqueGold);
+      doc.setFont("times","bold");
+      doc.setFontSize(20);
+      doc.text("WEDDING TATTOO EXPERIENCE",105,25,{align:"center"});
+    }
+
     doc.setTextColor(...antiqueGold);
-    doc.setFont("times","bold");
-    doc.setFontSize(20);
-    doc.text("WEDDING TATTOO EXPERIENCE",105,25,{align:"center"});
     doc.setFont("times","italic");
-    doc.setFontSize(9);
-    doc.text("LOVE. MARKED. FOREVER.",105,32,{align:"center"});
+    doc.setFontSize(8);
+    doc.text("LOVE. MARKED. FOREVER.",105,51,{align:"center"});
     doc.setDrawColor(...antiqueGold);
-    doc.line(28,38,182,38);
+    doc.line(28,56,182,56);
   }
 
   function seal(x,y,text){
@@ -795,9 +812,9 @@ function downloadQuotePdf(){
   // PAGINA 1
   parchmentPage();
   header();
-  seal(174,54,"WTE");
+  seal(174,72,"WTE");
 
-  let y=50;
+  let y=68;
   doc.setTextColor(...ink);
   doc.setFont("times","bold");
   doc.setFontSize(23);
@@ -865,9 +882,9 @@ function downloadQuotePdf(){
   doc.addPage();
   parchmentPage();
   header();
-  seal(174,54,"SIGILLO");
+  seal(174,72,"SIGILLO");
 
-  y=50;
+  y=68;
   doc.setTextColor(...ink);
   doc.setFont("times","bold");
   doc.setFontSize(21);
