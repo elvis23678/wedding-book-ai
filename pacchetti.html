@@ -263,6 +263,7 @@ input:focus,select:focus{border-color:var(--gold2)}
   </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="wedding-expert.js"></script>
 <script>
 const STUDIO = "Tattoo Beauty Saloon, Via Torino 1A, 10055 Condove TO";
 const EXTRA_HOUR_PRICE = 150;
@@ -503,29 +504,15 @@ function performCalculation(){
       ? calculated.find(p=>p.id==="essential")
       : null;
 
-  let personalAdvice=`Sceglierei ${recommended.name}. `;
-  personalAdvice+=`Per il tuo matrimonio prevediamo circa ${tattoos} tatuaggi distribuiti in circa ${hoursNeeded} ore. `;
-
-  if(lowerPackage){
-    const difference=recommended.total-lowerPackage.total;
-    if(lowerPackage.extraHours>0){
-      personalAdvice+=`Con ${lowerPackage.name} servirebbero ${lowerPackage.extraHours} ore extra. `;
-    }
-    if(lowerPackage.extraKm>0){
-      personalAdvice+=`Inoltre supereresti di ${lowerPackage.extraKm} km la soglia di trasferta inclusa. `;
-    }
-    if(difference>0){
-      personalAdvice+=`La differenza economica è di circa ${euro(difference)}, ma ${recommended.name} offre più margine, meno rischio di attese e maggiore tranquillità. `;
-    }
-  }
-
-  if(recommended.id==="luxury"){
-    personalAdvice+="È la soluzione che consiglierei anche se fosse il matrimonio di un mio amico.";
-  }else if(recommended.id==="signature"){
-    personalAdvice+="È la scelta più equilibrata per evitare extra inutili senza rinunciare alla qualità dell’esperienza.";
-  }else{
-    personalAdvice+="Per un evento intimo è sufficiente e mantiene il miglior rapporto tra costo e servizio.";
-  }
+  const personalAdvice=window.generateWeddingExpertAdvice({
+    guests,
+    tattoos,
+    km,
+    hoursNeeded,
+    recommended,
+    lowerPackage,
+    euro
+  });
 
   document.getElementById("personalAdvice").textContent=personalAdvice;
   buildCoverage(recommended,tattoos);
