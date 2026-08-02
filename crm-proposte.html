@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CRM Proposte | Wedding Tattoo Experience</title>
+<style>
+:root{
+  --gold:#c99a36;--gold2:#f0d07a;--bg:#050505;--panel:#0d0c09;
+  --text:#f7f1e7;--muted:#a99f90;--line:rgba(201,154,54,.26);
+  --green:#65c98b;--blue:#6ca8ff;--orange:#e7a84a;--red:#e86d62;--purple:#b98cff
+}
+*{box-sizing:border-box}
+html{background:#050505}
+body{
+  margin:0;min-height:100vh;color:var(--text);
+  font-family:Inter,Arial,sans-serif;
+  background:radial-gradient(circle at 50% 0,#1a1408 0,#090806 33%,#030303 76%)
+}
+button,input,select,textarea{font:inherit}
+a{color:inherit}
+.shell{width:min(1280px,100%);margin:auto;padding:20px 14px 80px}
+.topbar{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px
+}
+h1{
+  margin:0;font:400 clamp(31px,6vw,52px)/1 Georgia,serif;color:var(--gold2)
+}
+.eyebrow{
+  color:#9c917e;text-transform:uppercase;letter-spacing:.13em;font-size:10px;margin-bottom:8px
+}
+.subtitle{color:var(--muted);margin-top:8px}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:42px;padding:10px 14px;border:1px solid var(--line);border-radius:999px;
+  color:var(--gold2);background:#11100d;text-decoration:none;cursor:pointer;font-weight:750
+}
+.btn.primary{background:linear-gradient(135deg,#f0d078,#c99a36);color:#161109;border:0}
+.btn.danger{color:#ffaca4;border-color:rgba(232,109,98,.34)}
+.dashboard{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:16px 0
+}
+.metric{
+  border:1px solid var(--line);border-radius:18px;padding:15px;
+  background:linear-gradient(150deg,rgba(201,154,54,.09),rgba(255,255,255,.015))
+}
+.metric strong{display:block;font-size:23px;color:var(--gold2)}
+.metric span{display:block;margin-top:5px;color:var(--muted);font-size:11px}
+.controls{
+  display:grid;grid-template-columns:minmax(220px,1fr) 220px 220px auto;
+  gap:9px;margin:14px 0
+}
+.control{
+  width:100%;min-height:47px;border:1px solid var(--line);border-radius:14px;
+  background:#0b0b09;color:#fff;padding:11px 13px;outline:none
+}
+.control:focus{border-color:rgba(240,208,122,.65)}
+.table-card{
+  overflow:hidden;border:1px solid var(--line);border-radius:20px;background:var(--panel)
+}
+.table-scroll{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:1060px}
+th,td{padding:13px 11px;text-align:left;border-bottom:1px solid rgba(201,154,54,.11)}
+th{
+  color:var(--gold2);font-size:10px;text-transform:uppercase;letter-spacing:.09em;
+  background:#11100d;position:sticky;top:0;z-index:2
+}
+td{font-size:13px;color:#ddd3c3}
+tr:hover td{background:rgba(201,154,54,.035)}
+.code{font-weight:800;color:#f3d984}
+.names{font-weight:700;color:#fff}
+.status-badge{
+  display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border-radius:999px;
+  font-size:11px;font-weight:800;border:1px solid currentColor;white-space:nowrap
+}
+.status-Bozza{color:#b8b1a5}
+.status-Inviata{color:var(--blue)}
+.status-Attesa{color:var(--orange)}
+.status-Accettata{color:var(--green)}
+.status-Acconto{color:var(--purple)}
+.status-Confermata{color:#52d796}
+.status-Conclusa{color:#d7c385}
+.status-Scaduta,.status-Annullata{color:var(--red)}
+.row-actions{display:flex;gap:6px}
+.icon-btn{
+  min-height:34px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;
+  background:#15120d;color:var(--gold2);cursor:pointer;font-weight:750
+}
+.empty{display:none;padding:52px 20px;text-align:center;color:var(--muted)}
+.modal{
+  position:fixed;inset:0;z-index:50;display:none;align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,.78);padding:10px
+}
+.modal.show{display:flex}
+.sheet{
+  width:min(960px,100%);max-height:94vh;overflow:auto;background:#0b0a08;
+  border:1px solid var(--line);border-radius:25px 25px 14px 14px;padding:20px
+}
+.sheet-head{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:14px
+}
+.sheet h2{margin:0;color:var(--gold2);font:400 32px Georgia,serif}
+.sheet-id{color:var(--muted);margin-top:6px}
+.tabs{
+  display:flex;gap:7px;overflow:auto;margin:18px 0 14px;padding-bottom:3px
+}
+.tab{
+  flex:0 0 auto;border:1px solid var(--line);border-radius:999px;padding:9px 13px;
+  background:#12100c;color:#cbbfae;cursor:pointer;font-weight:750
+}
+.tab.active{background:var(--gold2);color:#171108;border-color:transparent}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.summary-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:9px
+}
+.summary-box{
+  border:1px solid var(--line);border-radius:14px;padding:12px;background:#11100d
+}
+.summary-box span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase}
+.summary-box strong{display:block;margin-top:5px;color:#fff}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.field.full{grid-column:1/-1}
+label{
+  display:block;margin-bottom:7px;color:#c7baa7;font-size:10px;
+  text-transform:uppercase;letter-spacing:.09em
+}
+textarea{resize:vertical}
+.sheet-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:15px}
+.timeline{display:grid;gap:10px}
+.timeline-item{
+  position:relative;padding:12px 13px 12px 36px;border:1px solid var(--line);
+  border-radius:14px;background:#11100d
+}
+.timeline-item::before{
+  content:"";position:absolute;left:15px;top:18px;width:9px;height:9px;border-radius:50%;
+  background:var(--gold2);box-shadow:0 0 0 4px rgba(240,208,122,.10)
+}
+.timeline-time{color:#948977;font-size:10px;margin-bottom:4px}
+.timeline-text{color:#eee5d6}
+.history-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.backup-row{
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px
+}
+.file-input{display:none}
+@media(max-width:900px){
+  .dashboard{grid-template-columns:repeat(2,1fr)}
+  .controls{grid-template-columns:1fr 1fr}
+  .summary-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:620px){
+  .topbar{flex-direction:column}
+  .dashboard,.controls,.summary-grid,.form-grid,.sheet-actions{grid-template-columns:1fr}
+  .sheet{padding:17px 14px}
+}
+</style>
+</head>
+<body>
+<main class="shell">
+  <div class="topbar">
+    <div>
+      <div class="eyebrow">Wedding Tattoo Experience</div>
+      <h1>CRM Proposte</h1>
+      <div class="subtitle">Archivio, ricerca, stati, note, timeline e storico modifiche.</div>
+    </div>
+    <div class="top-actions">
+      <a class="btn primary" href="pacchetti.html">+ Nuova proposta</a>
+      <button class="btn" id="exportBackup">Esporta backup</button>
+      <label class="btn" for="importBackup">Importa backup</label>
+      <input class="file-input" id="importBackup" type="file" accept="application/json">
+    </div>
+  </div>
+
+  <section class="dashboard">
+    <div class="metric"><strong id="mTotal">0</strong><span>Proposte totali</span></div>
+    <div class="metric"><strong id="mOpen">0</strong><span>In lavorazione</span></div>
+    <div class="metric"><strong id="mAccepted">0</strong><span>Accettate / confermate</span></div>
+    <div class="metric"><strong id="mValue">0 €</strong><span>Valore complessivo</span></div>
+    <div class="metric"><strong id="mRate">0%</strong><span>Tasso di conversione</span></div>
+  </section>
+
+  <section class="controls">
+    <input class="control" id="search" type="search" placeholder="Cerca codice, sposi, location, pacchetto…">
+    <select class="control" id="statusFilter">
+      <option value="">Tutti gli stati</option>
+      <option>Bozza</option>
+      <option>Inviata</option>
+      <option>In attesa</option>
+      <option>Accettata</option>
+      <option>Acconto ricevuto</option>
+      <option>Confermata</option>
+      <option>Evento concluso</option>
+      <option>Scaduta</option>
+      <option>Annullata</option>
+    </select>
+    <select class="control" id="packageFilter">
+      <option value="">Tutti i pacchetti</option>
+      <option>Essential</option>
+      <option>Signature</option>
+      <option>Luxury</option>
+    </select>
+    <button class="btn" id="clearFilters">Azzera filtri</button>
+  </section>
+
+  <section class="table-card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Codice</th>
+            <th>Sposi</th>
+            <th>Data matrimonio</th>
+            <th>Location</th>
+            <th>Pacchetto</th>
+            <th>Totale</th>
+            <th>Acconto</th>
+            <th>Stato</th>
+            <th>Ultima modifica</th>
+            <th>Azioni</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty">Nessuna proposta presente nell’archivio.</div>
+  </section>
+</main>
+
+<div class="modal" id="modal">
+  <section class="sheet">
+    <div class="sheet-head">
+      <div>
+        <h2 id="sheetTitle">Proposta</h2>
+        <div class="sheet-id" id="sheetId"></div>
+      </div>
+      <button class="btn" id="closeModal">Chiudi</button>
+    </div>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="overview">Riepilogo</button>
+      <button class="tab" data-tab="customer">Cliente</button>
+      <button class="tab" data-tab="timeline">Timeline</button>
+      <button class="tab" data-tab="notes">Note</button>
+    </nav>
+
+    <div class="tab-panel active" id="tab-overview">
+      <div class="summary-grid" id="summaryGrid"></div>
+      <div class="sheet-actions">
+        <button class="btn primary" id="openWhatsApp">Apri WhatsApp</button>
+        <button class="btn" id="duplicateProposal">Duplica proposta</button>
+        <button class="btn danger" id="deleteProposal">Elimina proposta</button>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-customer">
+      <div class="form-grid">
+        <div>
+          <label>Telefono WhatsApp</label>
+          <input class="control" id="editPhone" inputmode="tel" placeholder="393471234567">
+        </div>
+        <div>
+          <label>Email</label>
+          <input class="control" id="editEmail" type="email">
+        </div>
+        <div>
+          <label>Stato proposta</label>
+          <select class="control" id="editStatus">
+            <option>Bozza</option>
+            <option>Inviata</option>
+            <option>In attesa</option>
+            <option>Accettata</option>
+            <option>Acconto ricevuto</option>
+            <option>Confermata</option>
+            <option>Evento concluso</option>
+            <option>Scaduta</option>
+            <option>Annullata</option>
+          </select>
+        </div>
+        <div>
+          <label>Data matrimonio</label>
+          <input class="control" id="editWeddingDate" type="date">
+        </div>
+        <div class="field full">
+          <label>Location</label>
+          <input class="control" id="editLocation">
+        </div>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn primary" id="saveCustomer">Salva modifiche</button>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-timeline">
+      <div class="history-actions">
+        <button class="btn" data-event="PDF inviato al cliente">+ PDF inviato</button>
+        <button class="btn" data-event="Documento firmato ricevuto">+ Firma ricevuta</button>
+        <button class="btn" data-event="Acconto ricevuto">+ Acconto ricevuto</button>
+        <button class="btn" data-event="Data confermata">+ Data confermata</button>
+      </div>
+      <div class="timeline" id="timelineList"></div>
+    </div>
+
+    <div class="tab-panel" id="tab-notes">
+      <label>Note interne</label>
+      <textarea class="control" id="editNotes" rows="8" placeholder="Informazioni riservate allo studio…"></textarea>
+      <div class="sheet-actions">
+        <button class="btn primary" id="saveNotes">Salva note</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const KEY="wte_crm_proposals_v2";
+let selectedId=null;
+
+const STATUSES=["Bozza","Inviata","In attesa","Accettata","Acconto ricevuto","Confermata","Evento concluso","Scaduta","Annullata"];
+const euro=value=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Number(value)||0);
+const date=value=>value?new Intl.DateTimeFormat("it-IT").format(new Date(value+"T12:00:00")):"Da definire";
+const dateTime=value=>value?new Intl.DateTimeFormat("it-IT",{dateStyle:"short",timeStyle:"short"}).format(new Date(value)):"";
+
+function read(){
+  try{
+    const data=JSON.parse(localStorage.getItem(KEY)||"[]");
+    return Array.isArray(data)?data:[];
+  }catch(error){return []}
+}
+function write(data){localStorage.setItem(KEY,JSON.stringify(data))}
+function escapeHtml(value){
+  return String(value??"").replace(/[&<>"']/g,char=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+  }[char]));
+}
+function statusClass(status){
+  const map={
+    "Bozza":"Bozza","Inviata":"Inviata","In attesa":"Attesa","Accettata":"Accettata",
+    "Acconto ricevuto":"Acconto","Confermata":"Confermata","Evento concluso":"Conclusa",
+    "Scaduta":"Scaduta","Annullata":"Annullata"
+  };
+  return map[status]||"Bozza";
+}
+function addHistory(item,type,text){
+  item.history=Array.isArray(item.history)?item.history:[];
+  item.history.unshift({
+    id:crypto?.randomUUID?.()||Math.random().toString(36).slice(2),
+    at:new Date().toISOString(),type,text
+  });
+  item.updatedAt=new Date().toISOString();
+}
+
+function render(){
+  const all=read();
+  const q=document.getElementById("search").value.trim().toLowerCase();
+  const status=document.getElementById("statusFilter").value;
+  const pkg=document.getElementById("packageFilter").value;
+
+  const filtered=all.filter(item=>{
+    const haystack=[
+      item.id,item.names,item.location,item.packageName,item.weddingDate,item.phone,item.email
+    ].join(" ").toLowerCase();
+
+    return (!q||haystack.includes(q))&&(!status||item.status===status)&&(!pkg||item.packageName===pkg);
+  });
+
+  document.getElementById("rows").innerHTML=filtered.map(item=>`
+    <tr>
+      <td class="code">${escapeHtml(item.id)}</td>
+      <td class="names">${escapeHtml(item.names)}</td>
+      <td>${date(item.weddingDate)}</td>
+      <td>${escapeHtml(item.location||"Da definire")}</td>
+      <td>${escapeHtml(item.packageName)}</td>
+      <td>${euro(item.total)} + IVA</td>
+      <td>${euro(item.deposit)} + IVA</td>
+      <td><span class="status-badge status-${statusClass(item.status)}">${escapeHtml(item.status)}</span></td>
+      <td>${dateTime(item.updatedAt)}</td>
+      <td>
+        <div class="row-actions">
+          <button class="icon-btn" data-open="${escapeHtml(item.id)}">Apri</button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+
+  document.getElementById("empty").style.display=filtered.length?"none":"block";
+
+  const accepted=all.filter(x=>["Accettata","Acconto ricevuto","Confermata","Evento concluso"].includes(x.status));
+  const open=all.filter(x=>!["Evento concluso","Scaduta","Annullata"].includes(x.status));
+  const closedBase=all.filter(x=>!["Bozza","Scaduta","Annullata"].includes(x.status));
+
+  document.getElementById("mTotal").textContent=all.length;
+  document.getElementById("mOpen").textContent=open.length;
+  document.getElementById("mAccepted").textContent=accepted.length;
+  document.getElementById("mValue").textContent=euro(all.reduce((sum,x)=>sum+(Number(x.total)||0),0));
+  document.getElementById("mRate").textContent=closedBase.length?Math.round(accepted.length/closedBase.length*100)+"%":"0%";
+
+  document.querySelectorAll("[data-open]").forEach(btn=>{
+    btn.addEventListener("click",()=>openProposal(btn.dataset.open));
+  });
+}
+
+function openProposal(id){
+  const item=read().find(x=>x.id===id);
+  if(!item) return;
+
+  selectedId=id;
+  document.getElementById("sheetTitle").textContent=item.names;
+  document.getElementById("sheetId").textContent=item.id+" · "+item.status;
+
+  const summary=[
+    ["Data matrimonio",date(item.weddingDate)],
+    ["Location",item.location||"Da definire"],
+    ["Pacchetto",item.packageName],
+    ["Totale",euro(item.total)+" + IVA"],
+    ["Acconto",euro(item.deposit)+" + IVA"],
+    ["Tatuaggi stimati",item.tattoos],
+    ["Ore previste",item.hoursNeeded+" h"],
+    ["Distanza",item.km+" km"]
+  ];
+  document.getElementById("summaryGrid").innerHTML=summary.map(([label,value])=>`
+    <div class="summary-box"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>
+  `).join("");
+
+  document.getElementById("editPhone").value=item.phone||"";
+  document.getElementById("editEmail").value=item.email||"";
+  document.getElementById("editStatus").value=item.status||"Bozza";
+  document.getElementById("editWeddingDate").value=item.weddingDate||"";
+  document.getElementById("editLocation").value=item.location||"";
+  document.getElementById("editNotes").value=item.notes||"";
+  renderTimeline(item);
+
+  document.getElementById("modal").classList.add("show");
+}
+
+function renderTimeline(item){
+  const history=Array.isArray(item.history)?item.history:[];
+  document.getElementById("timelineList").innerHTML=history.length
+    ?history.map(event=>`
+      <div class="timeline-item">
+        <div class="timeline-time">${dateTime(event.at)}</div>
+        <div class="timeline-text">${escapeHtml(event.text)}</div>
+      </div>
+    `).join("")
+    :'<div class="empty" style="display:block">Nessun evento registrato.</div>';
+}
+
+function closeModal(){
+  document.getElementById("modal").classList.remove("show");
+  selectedId=null;
+}
+
+function updateSelected(mutator,historyText){
+  const data=read();
+  const item=data.find(x=>x.id===selectedId);
+  if(!item) return;
+  mutator(item);
+  if(historyText) addHistory(item,"update",historyText);
+  else item.updatedAt=new Date().toISOString();
+  write(data);
+  render();
+  openProposal(item.id);
+}
+
+function saveCustomer(){
+  const newStatus=document.getElementById("editStatus").value;
+  updateSelected(item=>{
+    const oldStatus=item.status;
+    item.phone=document.getElementById("editPhone").value.trim();
+    item.email=document.getElementById("editEmail").value.trim();
+    item.status=newStatus;
+    item.weddingDate=document.getElementById("editWeddingDate").value;
+    item.location=document.getElementById("editLocation").value.trim();
+    if(oldStatus!==newStatus){
+      addHistory(item,"status",`Stato modificato: ${oldStatus} → ${newStatus}.`);
+    }
+  },"Dati cliente aggiornati.");
+}
+
+function saveNotes(){
+  updateSelected(item=>{
+    item.notes=document.getElementById("editNotes").value.trim();
+  },"Note interne aggiornate.");
+}
+
+function addQuickEvent(text){
+  updateSelected(item=>{
+    addHistory(item,"event",text+".");
+  });
+}
+
+function duplicateProposal(){
+  const data=read();
+  const source=data.find(x=>x.id===selectedId);
+  if(!source) return;
+  const now=new Date();
+  const copy=structuredClone(source);
+  copy.id=`WTE-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
+  copy.names=source.names+" · Copia";
+  copy.status="Bozza";
+  copy.createdAt=copy.updatedAt=now.toISOString();
+  copy.history=[];
+  addHistory(copy,"duplicate",`Proposta duplicata da ${source.id}.`);
+  data.unshift(copy);
+  write(data);
+  render();
+  closeModal();
+}
+
+function deleteProposal(){
+  if(!confirm("Eliminare definitivamente questa proposta?")) return;
+  write(read().filter(x=>x.id!==selectedId));
+  render();
+  closeModal();
+}
+
+function openWhatsApp(){
+  const item=read().find(x=>x.id===selectedId);
+  if(!item) return;
+  if(!item.phone){
+    alert("Inserisci prima il numero WhatsApp nella scheda Cliente.");
+    return;
+  }
+
+  const messages={
+    "Bozza":`Ciao ${item.names}, stiamo preparando la vostra proposta Wedding Tattoo Experience ${item.id}.`,
+    "Inviata":`Ciao ${item.names}, la vostra proposta Wedding Tattoo Experience ${item.id} è pronta. Restiamo a disposizione per qualsiasi chiarimento.`,
+    "In attesa":`Ciao ${item.names}, per procedere potete firmare la proposta ${item.id} e inviarcela direttamente in questa chat.`,
+    "Accettata":`Ciao ${item.names}, abbiamo ricevuto la vostra accettazione della proposta ${item.id}.`,
+    "Acconto ricevuto":`Ciao ${item.names}, abbiamo ricevuto correttamente l’acconto relativo alla proposta ${item.id}.`,
+    "Confermata":`Ciao ${item.names}, la data del vostro matrimonio è ufficialmente confermata. Grazie per aver scelto Wedding Tattoo Experience.`,
+    "Evento concluso":`Ciao ${item.names}, grazie per aver condiviso con noi il vostro matrimonio. È stato un piacere far parte di questo ricordo.`,
+    "Scaduta":`Ciao ${item.names}, il periodo di riserva della proposta ${item.id} è terminato. Contattateci per verificare nuovamente la disponibilità.`,
+    "Annullata":`Ciao ${item.names}, la proposta ${item.id} risulta annullata. Restiamo disponibili per qualsiasi chiarimento.`
+  };
+
+  const phone=item.phone.replace(/\D/g,"");
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(messages[item.status]||messages.Bozza)}`,"_blank");
+}
+
+function exportBackup(){
+  const blob=new Blob([JSON.stringify(read(),null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=`WTE_CRM_Backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importBackup(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const parsed=JSON.parse(reader.result);
+      if(!Array.isArray(parsed)) throw new Error("Formato non valido");
+      if(!confirm(`Importare ${parsed.length} proposte e sostituire l’archivio attuale?`)) return;
+      write(parsed);
+      render();
+      alert("Backup importato correttamente.");
+    }catch(error){
+      alert("Il file selezionato non è un backup CRM valido.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById("search").addEventListener("input",render);
+document.getElementById("statusFilter").addEventListener("change",render);
+document.getElementById("packageFilter").addEventListener("change",render);
+document.getElementById("clearFilters").addEventListener("click",()=>{
+  document.getElementById("search").value="";
+  document.getElementById("statusFilter").value="";
+  document.getElementById("packageFilter").value="";
+  render();
+});
+document.getElementById("closeModal").addEventListener("click",closeModal);
+document.getElementById("modal").addEventListener("click",event=>{
+  if(event.target.id==="modal") closeModal();
+});
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(x=>x.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("tab-"+tab.dataset.tab).classList.add("active");
+  });
+});
+document.getElementById("saveCustomer").addEventListener("click",saveCustomer);
+document.getElementById("saveNotes").addEventListener("click",saveNotes);
+document.getElementById("duplicateProposal").addEventListener("click",duplicateProposal);
+document.getElementById("deleteProposal").addEventListener("click",deleteProposal);
+document.getElementById("openWhatsApp").addEventListener("click",openWhatsApp);
+document.querySelectorAll("[data-event]").forEach(btn=>{
+  btn.addEventListener("click",()=>addQuickEvent(btn.dataset.event));
+});
+document.getElementById("exportBackup").addEventListener("click",exportBackup);
+document.getElementById("importBackup").addEventListener("change",event=>{
+  const file=event.target.files?.[0];
+  if(file) importBackup(file);
+  event.target.value="";
+});
+
+render();
+</script>
+</body>
+</html>

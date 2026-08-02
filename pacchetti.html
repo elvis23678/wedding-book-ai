@@ -243,6 +243,19 @@ input:focus,select:focus{border-color:var(--gold2)}
 
 
 .logo-print{filter:contrast(1.08) brightness(.88);}
+
+.crm-save-btn,.crm-open-link{
+  display:flex;align-items:center;justify-content:center;min-height:52px;
+  border:1px solid rgba(201,154,54,.45);border-radius:999px;
+  background:rgba(201,154,54,.08);color:var(--gold2);
+  text-decoration:none;font:inherit;font-weight:800;cursor:pointer;padding:12px 16px
+}
+.crm-save-btn:active,.crm-open-link:active{transform:scale(.985)}
+.crm-save-status{
+  grid-column:1/-1;text-align:center;min-height:18px;margin-top:2px;
+  color:#9bd7ad;font-size:12px
+}
+
 </style>
 </head>
 <body>
@@ -357,6 +370,9 @@ input:focus,select:focus{border-color:var(--gold2)}
       <div class="action-grid">
         <a class="cta" id="whatsappCta" href="#" target="_blank" rel="noopener">Richiedi questo pacchetto su WhatsApp</a>
         <button class="pdf-btn" id="downloadPdf" type="button">Scarica il preventivo PDF</button>
+        <button class="crm-save-btn" id="saveProposalCrm" type="button">Salva proposta nel CRM</button>
+        <a class="crm-open-link" href="crm-proposte.html">Apri archivio proposte</a>
+        <div class="crm-save-status" id="crmSaveStatus"></div>
       </div>
       <p class="warning" id="travelWarning"></p>
     </div>
@@ -1199,8 +1215,112 @@ async function runAnalysis(){
   analysisOverlay.setAttribute("aria-hidden","true");
 }
 
+
+const WTE_CRM_KEY="wte_crm_proposals_v2";
+
+function crmRead(){
+  try{
+    const data=JSON.parse(localStorage.getItem(WTE_CRM_KEY)||"[]");
+    return Array.isArray(data)?data:[];
+  }catch(error){
+    return [];
+  }
+}
+
+function crmWrite(data){
+  localStorage.setItem(WTE_CRM_KEY,JSON.stringify(data));
+}
+
+function crmProposalId(){
+  const now=new Date();
+  const stamp=[
+    now.getFullYear(),
+    String(now.getMonth()+1).padStart(2,"0"),
+    String(now.getDate()).padStart(2,"0")
+  ].join("");
+  return `WTE-${stamp}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
+}
+
+function crmAddHistory(proposal,type,text){
+  proposal.history=Array.isArray(proposal.history)?proposal.history:[];
+  proposal.history.unshift({
+    id:crypto?.randomUUID?.()||Math.random().toString(36).slice(2),
+    at:new Date().toISOString(),
+    type,
+    text
+  });
+}
+
+function saveProposalToCrm(){
+  const statusEl=document.getElementById("crmSaveStatus");
+
+  if(!currentQuote){
+    statusEl.textContent="Prima calcola il pacchetto consigliato.";
+    return;
+  }
+
+  const archive=crmRead();
+  const now=new Date().toISOString();
+  const existingId=currentQuote.crmId;
+  const previous=existingId?archive.find(item=>item.id===existingId):null;
+  const id=existingId||crmProposalId();
+  const total=Number(currentQuote.recommended.total)||0;
+  const deposit=Math.round(total*DEPOSIT_PERCENT/100);
+
+  const proposal={
+    id,
+    version:"WTE Proposal v1.0",
+    createdAt:previous?.createdAt||now,
+    updatedAt:now,
+    status:previous?.status||"Bozza",
+    names:currentQuote.names||"Sposi non indicati",
+    weddingDate:currentQuote.date||"",
+    startTime:currentQuote.startTime||"",
+    location:currentQuote.location||"",
+    km:Number(currentQuote.km)||0,
+    guests:Number(currentQuote.guests)||0,
+    interest:Number(currentQuote.interest)||0,
+    tattoos:Number(currentQuote.tattoos)||0,
+    hoursNeeded:Number(currentQuote.hoursNeeded)||0,
+    packageId:currentQuote.recommended.id,
+    packageName:currentQuote.recommended.name,
+    basePrice:Number(currentQuote.recommended.price)||0,
+    total,
+    deposit,
+    extraHours:Number(currentQuote.recommended.extraHours)||0,
+    extraHourCost:Number(currentQuote.recommended.extraHourCost)||0,
+    extraKm:Number(currentQuote.recommended.extraKm)||0,
+    extraKmCost:Number(currentQuote.recommended.extraKmCost)||0,
+    includedHours:Number(currentQuote.recommended.hours)||0,
+    includedKm:currentQuote.recommended.includedKm,
+    advice:currentQuote.advice||"",
+    phone:previous?.phone||"",
+    email:previous?.email||"",
+    notes:previous?.notes||"",
+    attachments:previous?.attachments||[],
+    history:previous?.history||[]
+  };
+
+  crmAddHistory(
+    proposal,
+    previous?"update":"create",
+    previous?"Proposta aggiornata dal configuratore.":"Proposta creata e salvata dal configuratore."
+  );
+
+  const index=archive.findIndex(item=>item.id===id);
+  if(index>=0) archive[index]=proposal;
+  else archive.unshift(proposal);
+
+  crmWrite(archive);
+  currentQuote.crmId=id;
+
+  statusEl.textContent=`Salvata: ${id}`;
+  setTimeout(()=>statusEl.textContent="",4500);
+}
+
 document.getElementById("calculate").addEventListener("click",runAnalysis);
 document.getElementById("downloadPdf").addEventListener("click",downloadQuotePdf);
+document.getElementById("saveProposalCrm").addEventListener("click",saveProposalToCrm);
 
 </script>
 </div>
