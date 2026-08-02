@@ -242,15 +242,17 @@ input:focus,select:focus{border-color:var(--gold2)}
 
 
 
-.archive-btn{
-  display:block;width:100%;border:1px solid rgba(201,154,54,.55);border-radius:999px;padding:16px;
-  background:rgba(201,154,54,.10);color:var(--gold2);font:inherit;font-weight:800;cursor:pointer
-}
-.archive-link{
-  display:block;text-align:center;margin-top:10px;color:#bcae93;font-size:13px;text-decoration:none
-}
-.save-feedback{
-  margin-top:10px;text-align:center;color:#8fd6a6;font-size:13px;min-height:18px
+.release-mark{
+  margin:18px auto 0;
+  width:max-content;
+  max-width:100%;
+  padding:7px 12px;
+  border:1px solid rgba(201,154,54,.22);
+  border-radius:999px;
+  color:#8f8574;
+  font-size:10px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
 }
 
 </style>
@@ -367,13 +369,11 @@ input:focus,select:focus{border-color:var(--gold2)}
       <div class="action-grid">
         <a class="cta" id="whatsappCta" href="#" target="_blank" rel="noopener">Richiedi questo pacchetto su WhatsApp</a>
         <button class="pdf-btn" id="downloadPdf" type="button">Scarica il preventivo PDF</button>
-        <button class="archive-btn" id="saveProposal" type="button">Salva proposta in archivio</button>
-        <a class="archive-btn" href="archivio-proposte.html">Apri archivio proposte</a>
       </div>
-      <div class="save-feedback" id="saveFeedback"></div>
       <p class="warning" id="travelWarning"></p>
     </div>
   </section>
+<div class="release-mark">WTE Sprint 1 completato · Documento Premium v1.0</div>
 </main>
 
 <div class="analysis-overlay" id="analysisOverlay" aria-hidden="true">
@@ -721,6 +721,15 @@ function downloadQuotePdf(){
   const logoImage=document.getElementById("officialLogoImage");
   const signatureImage=document.getElementById("signatureImage");
 
+  doc.setProperties({
+    title:"Wedding Tattoo Experience - Atto di Prenotazione",
+    subject:`Proposta ${proposalId}`,
+    author:"Wedding Tattoo Experience",
+    creator:"WTE Configurator",
+    keywords:"wedding tattoo, proposta, prenotazione"
+  });
+
+
   function pageBase(){
     doc.setFillColor(...parchment);
     doc.rect(0,0,210,297,"F");
@@ -751,7 +760,7 @@ function downloadQuotePdf(){
     if(logoImage && logoImage.complete && logoImage.naturalWidth){
       try{
         doc.saveGraphicsState();
-        doc.setGState(new doc.GState({opacity:.022}));
+        doc.setGState(new doc.GState({opacity:.018}));
         doc.addImage(logoImage,"PNG",66,105,78,86,undefined,"FAST");
         doc.restoreGraphicsState();
       }catch(error){}
@@ -761,7 +770,7 @@ function downloadQuotePdf(){
   function header(){
     if(logoImage && logoImage.complete && logoImage.naturalWidth){
       try{
-        doc.addImage(logoImage,"PNG",75,14,60,33,undefined,"FAST");
+        doc.addImage(logoImage,"PNG",73,13,64,35,undefined,"FAST");
       }catch(error){}
     }
 
@@ -776,7 +785,7 @@ function downloadQuotePdf(){
   function section(title,y){
     doc.setTextColor(...antiqueGold);
     doc.setFont("times","bold");
-    doc.setFontSize(10.5);
+    doc.setFontSize(10.8);
     doc.text(title.toUpperCase(),20,y);
     doc.line(20,y+2,190,y+2);
     return y+8;
@@ -836,7 +845,7 @@ function downloadQuotePdf(){
 
   doc.setFillColor(244,229,198);
   doc.setDrawColor(...antiqueGold);
-  doc.roundedRect(151,62,39,28,2,2,"FD");
+  doc.roundedRect(150,61,40,29,2.6,2.6,"FD");
   doc.setTextColor(...antiqueGold);
   doc.setFont("times","bold");
   doc.setFontSize(7);
@@ -848,8 +857,8 @@ function downloadQuotePdf(){
   doc.setFont("helvetica","normal");
   doc.setFontSize(6.5);
   doc.setTextColor(...muted);
-  doc.text("Versione 1.0",170.5,81,{align:"center"});
-  doc.text("Documento numerato",170.5,86,{align:"center"});
+  doc.text("Documento originale",170,81,{align:"center"});
+  doc.text("Generato automaticamente",170,86,{align:"center"});
 
   doc.setFont("times","normal");
   doc.setFontSize(10);
@@ -878,8 +887,8 @@ function downloadQuotePdf(){
   // Financial summary: fixed position
   const boxY=203;
   doc.setFillColor(244,229,198);
-  doc.setDrawColor(125,82,28);
-  doc.setLineWidth(.5);
+  doc.setDrawColor(116,74,24);
+  doc.setLineWidth(.58);
   doc.roundedRect(20,boxY,170,34,2.4,2.4,"FD");
 
   doc.setTextColor(...antiqueGold);
@@ -904,7 +913,7 @@ function downloadQuotePdf(){
   doc.text("Termine di pagamento",163,boxY+27,{align:"center"});
 
   // Expert advice: fixed safe area
-  section("Parere personale del Wedding Expert",248);
+  section("Parere personale del Wedding Expert",247.5);
   doc.setFont("times","normal");
   doc.setFontSize(8.4);
   doc.setTextColor(...ink);
@@ -912,7 +921,7 @@ function downloadQuotePdf(){
   const body=shortAdvice(q.advice,340);
   const advice=`Gentili Sposi, ${body}`;
   const lines=doc.splitTextToSize(advice,166).slice(0,5);
-  doc.text(lines,22,257,{lineHeightFactor:1.30});
+  doc.text(lines,22,256.5,{lineHeightFactor:1.34});
 
   footer(1);
 
@@ -985,18 +994,18 @@ function downloadQuotePdf(){
   // Studio signature: compact and safely above footer
   doc.setTextColor(...muted);
   doc.setFontSize(7.5);
-  doc.text("Per Wedding Tattoo Experience",178,251,{align:"right"});
+  doc.text("Per Wedding Tattoo Experience",178,250.5,{align:"right"});
 
   if(signatureImage && signatureImage.complete){
     try{
-      doc.addImage(signatureImage,"PNG",119,250,59,17,undefined,"FAST");
+      doc.addImage(signatureImage,"PNG",117,249,61,18,undefined,"FAST");
     }catch(error){}
   }
 
   doc.setTextColor(...ink);
   doc.setFont("times","bold");
   doc.setFontSize(8);
-  doc.text("Elvis Billeci",178,266.5,{align:"right"});
+  doc.text("Elvis Billeci",178,266,{align:"right"});
 
   footer(2);
 
@@ -1192,90 +1201,8 @@ async function runAnalysis(){
   analysisOverlay.setAttribute("aria-hidden","true");
 }
 
-
-const WTE_ARCHIVE_KEY="wte_proposals_v1";
-
-function getProposalArchive(){
-  try{
-    const parsed=JSON.parse(localStorage.getItem(WTE_ARCHIVE_KEY)||"[]");
-    return Array.isArray(parsed)?parsed:[];
-  }catch(error){
-    return [];
-  }
-}
-
-function createProposalId(){
-  const now=new Date();
-  const datePart=[
-    now.getFullYear(),
-    String(now.getMonth()+1).padStart(2,"0"),
-    String(now.getDate()).padStart(2,"0")
-  ].join("");
-  const random=Math.random().toString(36).slice(2,7).toUpperCase();
-  return `WTE-${datePart}-${random}`;
-}
-
-function saveCurrentProposal(){
-  const feedback=document.getElementById("saveFeedback");
-
-  if(!currentQuote){
-    feedback.textContent="Prima calcola il pacchetto consigliato.";
-    return;
-  }
-
-  const archive=getProposalArchive();
-  const existingId=currentQuote.archiveId;
-  const now=new Date().toISOString();
-
-  const proposal={
-    id:existingId||createProposalId(),
-    createdAt:existingId
-      ? (archive.find(item=>item.id===existingId)?.createdAt||now)
-      : now,
-    updatedAt:now,
-    status:"Bozza",
-    names:currentQuote.names||"Sposi non indicati",
-    weddingDate:currentQuote.date||"",
-    startTime:currentQuote.startTime||"",
-    location:currentQuote.location||"",
-    km:Number(currentQuote.km)||0,
-    guests:Number(currentQuote.guests)||0,
-    interest:Number(currentQuote.interest)||0,
-    tattoos:Number(currentQuote.tattoos)||0,
-    hoursNeeded:Number(currentQuote.hoursNeeded)||0,
-    packageName:currentQuote.recommended.name,
-    packageId:currentQuote.recommended.id,
-    total:Number(currentQuote.recommended.total)||0,
-    deposit:Math.round((Number(currentQuote.recommended.total)||0)*DEPOSIT_PERCENT/100),
-    extraHours:Number(currentQuote.recommended.extraHours)||0,
-    extraKm:Number(currentQuote.recommended.extraKm)||0,
-    advice:currentQuote.advice||"",
-    phone:"",
-    email:"",
-    notes:""
-  };
-
-  const index=archive.findIndex(item=>item.id===proposal.id);
-  if(index>=0){
-    proposal.status=archive[index].status||proposal.status;
-    proposal.phone=archive[index].phone||"";
-    proposal.email=archive[index].email||"";
-    proposal.notes=archive[index].notes||"";
-    archive[index]=proposal;
-  }else{
-    archive.unshift(proposal);
-  }
-
-  localStorage.setItem(WTE_ARCHIVE_KEY,JSON.stringify(archive));
-  currentQuote.archiveId=proposal.id;
-
-  feedback.textContent=`Proposta ${proposal.id} salvata nell’archivio.`;
-  setTimeout(()=>{feedback.textContent="";},4500);
-}
-
 document.getElementById("calculate").addEventListener("click",runAnalysis);
 document.getElementById("downloadPdf").addEventListener("click",downloadQuotePdf);
-document.getElementById("saveProposal").addEventListener("click",saveCurrentProposal);
 
 </script>
 </div>
