@@ -244,8 +244,7 @@ input:focus,select:focus{border-color:var(--gold2)}
 </style>
 </head>
 <body>
-<img id="tbsSealImage" src="timbro-tbs.png" alt="" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
-<img id="officialLogoImage" src="logo-wedding-trasparente.png" alt="" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
+<img id="officialLogoImage" src="logo-wedding-trasparente-scuro.png" alt="" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
 <main class="wrap">
   <a class="back" href="index.html">← Torna al Wedding Book</a>
 
@@ -699,9 +698,12 @@ function downloadQuotePdf(){
   const holdUntil=addCalendarDays(today,DATE_HOLD_DAYS);
   const deposit=Math.round((q.recommended.total*DEPOSIT_PERCENT)/100);
   const proposalId=`WTE-${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}${String(today.getDate()).padStart(2,"0")}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
+  const generatedAt=new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(today);
+  const proposalHash=btoa(unescape(encodeURIComponent(
+    [proposalId,q.names||"",q.date||"",q.recommended.name,q.recommended.total].join("|")
+  ))).replace(/[^A-Z0-9]/gi,"").slice(-12).toUpperCase();
 
   const logoImage=document.getElementById("officialLogoImage");
-  const sealImage=document.getElementById("tbsSealImage");
   const signatureImage=document.getElementById("signatureImage");
 
   function pageBase(){
@@ -734,7 +736,7 @@ function downloadQuotePdf(){
     if(logoImage && logoImage.complete && logoImage.naturalWidth){
       try{
         doc.saveGraphicsState();
-        doc.setGState(new doc.GState({opacity:.028}));
+        doc.setGState(new doc.GState({opacity:.022}));
         doc.addImage(logoImage,"PNG",66,105,78,86,undefined,"FAST");
         doc.restoreGraphicsState();
       }catch(error){}
@@ -779,11 +781,13 @@ function downloadQuotePdf(){
   function footer(pageNo){
     doc.setDrawColor(196,171,126);
     doc.line(24,272,186,272);
+
     doc.setFont("times","italic");
-    doc.setFontSize(7.2);
+    doc.setFontSize(7.1);
     doc.setTextColor(...muted);
-    doc.text(`Documento riservato · WTE Proposal v1.0 · ${proposalId} · Pagina ${pageNo}/2`,105,278.5,{align:"center"});
-    doc.text("Tattoo Beauty Saloon · Via Torino 1A, Condove (TO) · WhatsApp +39 347 705 0250",105,283.5,{align:"center"});
+    doc.text(`WTE Proposal v1.0 · ${proposalId} · Pagina ${pageNo}/2`,105,277.5,{align:"center"});
+    doc.text(`Generato: ${generatedAt} · Hash: ${proposalHash}`,105,281,{align:"center"});
+    doc.text("Tattoo Beauty Saloon · Via Torino 1A, Condove (TO) · WhatsApp +39 347 705 0250",105,284.5,{align:"center"});
   }
 
   function shortAdvice(text,maxChars=340){
@@ -800,13 +804,6 @@ function downloadQuotePdf(){
     return (out||clean.slice(0,maxChars).trim()).replace(/[,\s]+$/,"")+".";
   }
 
-  function addSeal(x,y,rotation=5){
-    if(sealImage && sealImage.complete && sealImage.naturalWidth){
-      try{
-        doc.addImage(sealImage,"PNG",x-12,y-12,24,24,undefined,"FAST",rotation);
-      }catch(error){}
-    }
-  }
 
   // ===================== PAGINA 1 =====================
   pageBase();
@@ -837,7 +834,7 @@ function downloadQuotePdf(){
   doc.setFontSize(6.5);
   doc.setTextColor(...muted);
   doc.text("Versione 1.0",170.5,81,{align:"center"});
-  doc.text("Generato automaticamente",170.5,86,{align:"center"});
+  doc.text("Documento numerato",170.5,86,{align:"center"});
 
   doc.setFont("times","normal");
   doc.setFontSize(10);
@@ -868,7 +865,7 @@ function downloadQuotePdf(){
   doc.setFillColor(244,229,198);
   doc.setDrawColor(125,82,28);
   doc.setLineWidth(.5);
-  doc.roundedRect(20,boxY,170,34,2,2,"FD");
+  doc.roundedRect(20,boxY,170,34,2.4,2.4,"FD");
 
   doc.setTextColor(...antiqueGold);
   doc.setFont("times","bold");
@@ -892,7 +889,7 @@ function downloadQuotePdf(){
   doc.text("Termine di pagamento",163,boxY+27,{align:"center"});
 
   // Expert advice: fixed safe area
-  section("Parere personale del Wedding Expert",246);
+  section("Parere personale del Wedding Expert",248);
   doc.setFont("times","normal");
   doc.setFontSize(8.4);
   doc.setTextColor(...ink);
@@ -900,7 +897,7 @@ function downloadQuotePdf(){
   const body=shortAdvice(q.advice,340);
   const advice=`Gentili Sposi, ${body}`;
   const lines=doc.splitTextToSize(advice,166).slice(0,5);
-  doc.text(lines,22,254,{lineHeightFactor:1.18});
+  doc.text(lines,22,257,{lineHeightFactor:1.30});
 
   footer(1);
 
@@ -921,7 +918,7 @@ function downloadQuotePdf(){
 
   doc.setFillColor(244,229,198);
   doc.setDrawColor(...antiqueGold);
-  doc.roundedRect(20,101,170,25,2,2,"FD");
+  doc.roundedRect(20,101,170,25,2.4,2.4,"FD");
   doc.setTextColor(...antiqueGold);
   doc.setFont("times","bold");
   doc.setFontSize(11);
@@ -959,9 +956,7 @@ function downloadQuotePdf(){
   doc.text(doc.splitTextToSize(legal,164),22,y);
 
   // One seal only, in a clear empty area.
-  addSeal(105,224,4);
-
-  // Customer signature lines
+// Customer signature lines
   doc.setDrawColor(135,110,75);
   doc.line(22,244,80,244);
   doc.line(89,244,147,244);
@@ -979,14 +974,14 @@ function downloadQuotePdf(){
 
   if(signatureImage && signatureImage.complete){
     try{
-      doc.addImage(signatureImage,"PNG",120,251,58,17,undefined,"FAST");
+      doc.addImage(signatureImage,"PNG",119,250,59,17,undefined,"FAST");
     }catch(error){}
   }
 
   doc.setTextColor(...ink);
   doc.setFont("times","bold");
   doc.setFontSize(8);
-  doc.text("Elvis Billeci",178,267,{align:"right"});
+  doc.text("Elvis Billeci",178,266.5,{align:"right"});
 
   footer(2);
 
