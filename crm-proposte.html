@@ -154,6 +154,43 @@ textarea{resize:vertical}
   .dashboard,.controls,.summary-grid,.form-grid,.sheet-actions{grid-template-columns:1fr}
   .sheet{padding:17px 14px}
 }
+
+.whatsapp-panel{
+  margin-top:14px;padding:15px;border:1px solid rgba(101,201,139,.28);
+  border-radius:16px;background:rgba(37,211,102,.055)
+}
+.whatsapp-head{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px
+}
+.whatsapp-head h3{margin:0;color:#8fe0aa;font:400 22px Georgia,serif}
+.message-preview{
+  min-height:150px;white-space:pre-wrap;line-height:1.55;
+  border:1px solid rgba(101,201,139,.25);border-radius:14px;
+  background:#090d0a;color:#e8f5eb;padding:13px
+}
+.consent-row{
+  display:flex;align-items:center;gap:9px;margin-top:10px;color:#c8bead;font-size:12px
+}
+.consent-row input{width:18px;height:18px}
+.template-list{display:grid;gap:10px}
+.template-card{
+  border:1px solid var(--line);border-radius:14px;padding:12px;background:#11100d
+}
+.template-card strong{display:block;color:var(--gold2);margin-bottom:7px}
+.template-card textarea{min-height:105px}
+.template-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.quick-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.log-badge{
+  display:inline-flex;padding:5px 8px;border-radius:999px;
+  background:rgba(37,211,102,.10);color:#8fe0aa;font-size:10px;font-weight:800
+}
+.status-change-box{
+  margin-top:14px;padding:14px;border:1px solid var(--line);
+  border-radius:16px;background:#11100d
+}
+.status-change-grid{display:grid;grid-template-columns:1fr auto;gap:8px}
+@media(max-width:620px){.status-change-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -242,12 +279,14 @@ textarea{resize:vertical}
       <button class="tab" data-tab="customer">Cliente</button>
       <button class="tab" data-tab="timeline">Timeline</button>
       <button class="tab" data-tab="notes">Note</button>
+      <button class="tab" data-tab="whatsapp">WhatsApp</button>
+      <button class="tab" data-tab="templates">Template</button>
     </nav>
 
     <div class="tab-panel active" id="tab-overview">
       <div class="summary-grid" id="summaryGrid"></div>
       <div class="sheet-actions">
-        <button class="btn primary" id="openWhatsApp">Apri WhatsApp</button>
+        <button class="btn primary" id="openWhatsApp">Prepara WhatsApp</button>
         <button class="btn" id="duplicateProposal">Duplica proposta</button>
         <button class="btn danger" id="deleteProposal">Elimina proposta</button>
       </div>
@@ -308,6 +347,55 @@ textarea{resize:vertical}
         <button class="btn primary" id="saveNotes">Salva note</button>
       </div>
     </div>
+
+    <div class="tab-panel" id="tab-whatsapp">
+      <div class="whatsapp-panel">
+        <div class="whatsapp-head">
+          <h3>Messaggio cliente</h3>
+          <span class="log-badge" id="whatsappLogCount">0 invii registrati</span>
+        </div>
+
+        <div class="status-change-box">
+          <label>Cambia stato e prepara il messaggio</label>
+          <div class="status-change-grid">
+            <select class="control" id="whatsappStatus">
+              <option>Bozza</option>
+              <option>Inviata</option>
+              <option>In attesa</option>
+              <option>Accettata</option>
+              <option>Acconto ricevuto</option>
+              <option>Confermata</option>
+              <option>Evento concluso</option>
+              <option>Scaduta</option>
+              <option>Annullata</option>
+            </select>
+            <button class="btn" id="applyStatusAndPreview">Applica stato</button>
+          </div>
+        </div>
+
+        <label style="margin-top:14px">Anteprima messaggio</label>
+        <textarea class="message-preview" id="messagePreview"></textarea>
+
+        <label class="consent-row">
+          <input id="whatsappConsent" type="checkbox">
+          Il cliente ha autorizzato il contatto tramite WhatsApp.
+        </label>
+
+        <div class="quick-actions">
+          <button class="btn primary" id="sendWhatsAppNow">Apri WhatsApp e registra invio</button>
+          <button class="btn" id="copyWhatsAppMessage">Copia messaggio</button>
+          <button class="btn" id="resetWhatsAppMessage">Rigenera dal template</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-templates">
+      <div class="template-list" id="templateList"></div>
+      <div class="sheet-actions">
+        <button class="btn primary" id="saveTemplates">Salva template</button>
+        <button class="btn" id="resetTemplates">Ripristina predefiniti</button>
+      </div>
+    </div>
   </section>
 </div>
 
@@ -316,6 +404,165 @@ const KEY="wte_crm_proposals_v2";
 let selectedId=null;
 
 const STATUSES=["Bozza","Inviata","In attesa","Accettata","Acconto ricevuto","Confermata","Evento concluso","Scaduta","Annullata"];
+
+const TEMPLATE_KEY="wte_crm_whatsapp_templates_v1";
+
+const DEFAULT_TEMPLATES={
+  "Bozza":"Ciao {names}, stiamo preparando la vostra proposta Wedding Tattoo Experience {id}.",
+  "Inviata":"Ciao {names}, la vostra proposta Wedding Tattoo Experience {id} è pronta. Il pacchetto consigliato è {package}, per un totale stimato di {total} + IVA. Restiamo a disposizione per qualsiasi chiarimento.",
+  "In attesa":"Ciao {names}, per procedere potete firmare la proposta {id} e inviarcela direttamente in questa chat. La data del matrimonio indicata è {weddingDate}.",
+  "Accettata":"Ciao {names}, abbiamo ricevuto la vostra accettazione della proposta {id}. A breve riceverete i dati per il versamento dell’acconto di {deposit} + IVA.",
+  "Acconto ricevuto":"Ciao {names}, abbiamo ricevuto correttamente l’acconto di {deposit} + IVA relativo alla proposta {id}.",
+  "Confermata":"Ciao {names}, la data del vostro matrimonio del {weddingDate} è ufficialmente confermata. Grazie per aver scelto Wedding Tattoo Experience.",
+  "Evento concluso":"Ciao {names}, grazie per aver condiviso con noi il vostro matrimonio. È stato un piacere far parte di questo ricordo. 💍",
+  "Scaduta":"Ciao {names}, il periodo di riserva della proposta {id} è terminato. Contattateci per verificare nuovamente la disponibilità della data.",
+  "Annullata":"Ciao {names}, la proposta {id} risulta annullata. Restiamo disponibili per qualsiasi chiarimento."
+};
+
+function readTemplates(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(TEMPLATE_KEY)||"null");
+    return parsed&&typeof parsed==="object"?{...DEFAULT_TEMPLATES,...parsed}:{...DEFAULT_TEMPLATES};
+  }catch(error){
+    return {...DEFAULT_TEMPLATES};
+  }
+}
+
+function writeTemplates(templates){
+  localStorage.setItem(TEMPLATE_KEY,JSON.stringify(templates));
+}
+
+function fillTemplate(template,item){
+  const values={
+    names:item.names||"Sposi",
+    id:item.id||"",
+    package:item.packageName||"",
+    total:euro(item.total),
+    deposit:euro(item.deposit),
+    weddingDate:date(item.weddingDate),
+    location:item.location||"Da definire",
+    status:item.status||"Bozza"
+  };
+
+  return String(template||"").replace(/\{(\w+)\}/g,(match,key)=>values[key]??match);
+}
+
+function getSelectedProposal(){
+  return read().find(x=>x.id===selectedId)||null;
+}
+
+function prepareWhatsAppMessage(statusOverride){
+  const item=getSelectedProposal();
+  if(!item) return;
+
+  const status=statusOverride||item.status||"Bozza";
+  const templates=readTemplates();
+  document.getElementById("whatsappStatus").value=status;
+  document.getElementById("messagePreview").value=fillTemplate(templates[status]||DEFAULT_TEMPLATES.Bozza,item);
+  document.getElementById("whatsappConsent").checked=Boolean(item.whatsappConsent);
+
+  const sends=(item.history||[]).filter(x=>x.type==="whatsapp").length;
+  document.getElementById("whatsappLogCount").textContent=`${sends} invii registrati`;
+}
+
+function renderTemplates(){
+  const templates=readTemplates();
+  document.getElementById("templateList").innerHTML=STATUSES.map(status=>`
+    <div class="template-card">
+      <strong>${escapeHtml(status)}</strong>
+      <textarea class="control" data-template-status="${escapeHtml(status)}">${escapeHtml(templates[status]||"")}</textarea>
+      <div class="template-actions">
+        <button class="btn" data-template-preview="${escapeHtml(status)}">Anteprima</button>
+      </div>
+    </div>
+  `).join("");
+
+  document.querySelectorAll("[data-template-preview]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      prepareWhatsAppMessage(btn.dataset.templatePreview);
+      document.querySelector('[data-tab="whatsapp"]').click();
+    });
+  });
+}
+
+function saveTemplates(){
+  const templates={};
+  document.querySelectorAll("[data-template-status]").forEach(area=>{
+    templates[area.dataset.templateStatus]=area.value.trim();
+  });
+  writeTemplates(templates);
+  alert("Template WhatsApp salvati.");
+}
+
+function resetTemplates(){
+  if(!confirm("Ripristinare tutti i template WhatsApp predefiniti?")) return;
+  localStorage.removeItem(TEMPLATE_KEY);
+  renderTemplates();
+  prepareWhatsAppMessage();
+}
+
+function applyStatusAndPreview(){
+  const newStatus=document.getElementById("whatsappStatus").value;
+  updateSelected(item=>{
+    const oldStatus=item.status;
+    item.status=newStatus;
+    if(oldStatus!==newStatus){
+      addHistory(item,"status",`Stato modificato: ${oldStatus} → ${newStatus}.`);
+    }
+  });
+  prepareWhatsAppMessage(newStatus);
+}
+
+function sendWhatsAppAndLog(){
+  const item=getSelectedProposal();
+  if(!item) return;
+
+  const phone=(item.phone||"").replace(/\D/g,"");
+  const message=document.getElementById("messagePreview").value.trim();
+  const consent=document.getElementById("whatsappConsent").checked;
+
+  if(!phone){
+    alert("Inserisci prima il numero WhatsApp nella scheda Cliente.");
+    return;
+  }
+  if(!consent){
+    alert("Conferma prima che il cliente abbia autorizzato il contatto WhatsApp.");
+    return;
+  }
+  if(!message){
+    alert("Il messaggio è vuoto.");
+    return;
+  }
+
+  const data=read();
+  const proposal=data.find(x=>x.id===selectedId);
+  if(!proposal) return;
+
+  proposal.whatsappConsent=true;
+  addHistory(proposal,"whatsapp",`Messaggio WhatsApp preparato e aperto per lo stato "${proposal.status}".`);
+  proposal.lastWhatsAppMessage=message;
+  proposal.lastWhatsAppAt=new Date().toISOString();
+  write(data);
+
+  render();
+  openProposal(proposal.id);
+  prepareWhatsAppMessage();
+
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`,"_blank");
+}
+
+async function copyWhatsAppMessage(){
+  const text=document.getElementById("messagePreview").value;
+  try{
+    await navigator.clipboard.writeText(text);
+    alert("Messaggio copiato.");
+  }catch(error){
+    document.getElementById("messagePreview").select();
+    document.execCommand("copy");
+    alert("Messaggio copiato.");
+  }
+}
+
 const euro=value=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Number(value)||0);
 const date=value=>value?new Intl.DateTimeFormat("it-IT").format(new Date(value+"T12:00:00")):"Da definire";
 const dateTime=value=>value?new Intl.DateTimeFormat("it-IT",{dateStyle:"short",timeStyle:"short"}).format(new Date(value)):"";
@@ -428,6 +675,8 @@ function openProposal(id){
   document.getElementById("editLocation").value=item.location||"";
   document.getElementById("editNotes").value=item.notes||"";
   renderTimeline(item);
+  renderTemplates();
+  prepareWhatsAppMessage();
 
   document.getElementById("modal").classList.add("show");
 }
@@ -514,27 +763,8 @@ function deleteProposal(){
 }
 
 function openWhatsApp(){
-  const item=read().find(x=>x.id===selectedId);
-  if(!item) return;
-  if(!item.phone){
-    alert("Inserisci prima il numero WhatsApp nella scheda Cliente.");
-    return;
-  }
-
-  const messages={
-    "Bozza":`Ciao ${item.names}, stiamo preparando la vostra proposta Wedding Tattoo Experience ${item.id}.`,
-    "Inviata":`Ciao ${item.names}, la vostra proposta Wedding Tattoo Experience ${item.id} è pronta. Restiamo a disposizione per qualsiasi chiarimento.`,
-    "In attesa":`Ciao ${item.names}, per procedere potete firmare la proposta ${item.id} e inviarcela direttamente in questa chat.`,
-    "Accettata":`Ciao ${item.names}, abbiamo ricevuto la vostra accettazione della proposta ${item.id}.`,
-    "Acconto ricevuto":`Ciao ${item.names}, abbiamo ricevuto correttamente l’acconto relativo alla proposta ${item.id}.`,
-    "Confermata":`Ciao ${item.names}, la data del vostro matrimonio è ufficialmente confermata. Grazie per aver scelto Wedding Tattoo Experience.`,
-    "Evento concluso":`Ciao ${item.names}, grazie per aver condiviso con noi il vostro matrimonio. È stato un piacere far parte di questo ricordo.`,
-    "Scaduta":`Ciao ${item.names}, il periodo di riserva della proposta ${item.id} è terminato. Contattateci per verificare nuovamente la disponibilità.`,
-    "Annullata":`Ciao ${item.names}, la proposta ${item.id} risulta annullata. Restiamo disponibili per qualsiasi chiarimento.`
-  };
-
-  const phone=item.phone.replace(/\D/g,"");
-  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(messages[item.status]||messages.Bozza)}`,"_blank");
+  document.querySelector('[data-tab="whatsapp"]').click();
+  prepareWhatsAppMessage();
 }
 
 function exportBackup(){
@@ -598,6 +828,22 @@ document.getElementById("importBackup").addEventListener("change",event=>{
   const file=event.target.files?.[0];
   if(file) importBackup(file);
   event.target.value="";
+});
+
+
+document.getElementById("applyStatusAndPreview").addEventListener("click",applyStatusAndPreview);
+document.getElementById("sendWhatsAppNow").addEventListener("click",sendWhatsAppAndLog);
+document.getElementById("copyWhatsAppMessage").addEventListener("click",copyWhatsAppMessage);
+document.getElementById("resetWhatsAppMessage").addEventListener("click",()=>prepareWhatsAppMessage());
+document.getElementById("saveTemplates").addEventListener("click",saveTemplates);
+document.getElementById("resetTemplates").addEventListener("click",resetTemplates);
+document.getElementById("whatsappConsent").addEventListener("change",event=>{
+  const data=read();
+  const item=data.find(x=>x.id===selectedId);
+  if(!item) return;
+  item.whatsappConsent=event.target.checked;
+  item.updatedAt=new Date().toISOString();
+  write(data);
 });
 
 render();
