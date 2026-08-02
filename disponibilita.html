@@ -3,82 +3,162 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050505">
 <title>Verifica disponibilità | Wedding Tattoo Experience</title>
 <style>
-:root{--gold:#c99a36;--gold2:#f0cf75;--bg:#050505;--card:#111;--text:#f5f2ea}
+:root{
+  --gold:#c99a36;
+  --gold2:#f0cf75;
+  --text:#f5f2ea;
+}
 *{box-sizing:border-box}
-body{margin:0;background:linear-gradient(180deg,#0a0a0a,#020202);color:var(--text);font-family:Arial,sans-serif}
-.wrap{max-width:700px;margin:auto;padding:24px}
-h1{font-family:Georgia,serif;color:var(--gold2);font-weight:400}
-p{color:#d4cab8}
-label{display:block;margin:16px 0 6px;color:var(--gold2);font-size:13px}
+html,body{
+  width:100%;
+  height:100%;
+  margin:0;
+  background:#050505;
+  color:var(--text);
+  font-family:Arial,sans-serif;
+}
+body{overflow:hidden}
+.page-scroll{
+  position:fixed;
+  inset:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
+  background:linear-gradient(180deg,#0a0a0a,#020202);
+}
+.wrap{
+  width:min(700px,100%);
+  margin:0 auto;
+  padding:calc(22px + env(safe-area-inset-top,0px)) 20px
+          calc(70px + env(safe-area-inset-bottom,0px));
+}
+.back{
+  display:inline-block;
+  margin-bottom:18px;
+  color:var(--gold2);
+  text-decoration:none;
+}
+h1{
+  margin:0 0 12px;
+  font-family:Georgia,serif;
+  color:var(--gold2);
+  font-weight:400;
+  font-size:clamp(32px,8vw,48px);
+}
+.intro{margin:0 0 24px;color:#d4cab8;line-height:1.55}
+label{
+  display:block;
+  margin:17px 0 7px;
+  color:var(--gold2);
+  font-size:13px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
 input,select,textarea{
-width:100%;padding:14px;border-radius:12px;
-border:1px solid #444;background:#151515;color:#fff;font-size:16px}
-textarea{min-height:120px;resize:vertical}
+  display:block;
+  width:100%;
+  padding:15px;
+  border:1px solid rgba(201,154,54,.35);
+  border-radius:14px;
+  background:#121212;
+  color:#fff;
+  font:inherit;
+  font-size:16px;
+  outline:none;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--gold2);
+}
+textarea{min-height:130px;resize:vertical}
 button{
-margin-top:22px;width:100%;padding:16px;border:0;border-radius:999px;
-background:linear-gradient(135deg,#e6c56c,#c99a36);
-color:#111;font-size:16px;font-weight:bold;cursor:pointer}
-.back{display:inline-block;margin-bottom:20px;color:var(--gold2);text-decoration:none}
+  width:100%;
+  margin-top:24px;
+  padding:17px;
+  border:0;
+  border-radius:999px;
+  background:linear-gradient(135deg,#e6c56c,#c99a36);
+  color:#111;
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
+.bottom-space{height:30px}
 </style>
 </head>
 <body>
-<div class="wrap">
-<a class="back" href="index.html">← Torna al catalogo</a>
-<h1>Verifica disponibilità</h1>
-<p>Compila il modulo. Si aprirà WhatsApp con la richiesta già compilata.</p>
+<main class="page-scroll" id="pageScroll">
+  <div class="wrap">
+    <a class="back" href="index.html">← Torna al catalogo</a>
+    <h1>Verifica disponibilità</h1>
+    <p class="intro">Compila il modulo. Si aprirà WhatsApp con la richiesta già compilata.</p>
 
-<form id="f">
-<label>Nomi degli sposi *</label>
-<input id="names" required>
+    <form id="availabilityForm">
+      <label for="names">Nomi degli sposi *</label>
+      <input id="names" name="names" required autocomplete="name">
 
-<label>Data matrimonio *</label>
-<input id="date" type="date" required>
+      <label for="date">Data matrimonio *</label>
+      <input id="date" name="date" type="date" required>
 
-<label>Location *</label>
-<input id="place" required>
+      <label for="place">Location *</label>
+      <input id="place" name="place" required>
 
-<label>Numero invitati</label>
-<input id="guests" type="number">
+      <label for="guests">Numero invitati</label>
+      <input id="guests" name="guests" type="number" min="1" inputmode="numeric">
 
-<label>Pacchetto</label>
-<select id="pack">
-<option>Da definire</option>
-<option>Bronze</option>
-<option>Silver</option>
-<option>Gold</option>
-</select>
+      <label for="pack">Pacchetto</label>
+      <select id="pack" name="pack">
+        <option>Da definire</option>
+        <option>Bronze</option>
+        <option>Silver</option>
+        <option>Gold</option>
+      </select>
 
-<label>Telefono *</label>
-<input id="phone" type="tel" required>
+      <label for="phone">Telefono *</label>
+      <input id="phone" name="phone" type="tel" required inputmode="tel">
 
-<label>Email</label>
-<input id="mail" type="email">
+      <label for="mail">Email</label>
+      <input id="mail" name="mail" type="email" inputmode="email">
 
-<label>Note</label>
-<textarea id="notes"></textarea>
+      <label for="notes">Note</label>
+      <textarea id="notes" name="notes"></textarea>
 
-<button type="submit">Invia richiesta su WhatsApp</button>
-</form>
-</div>
+      <button type="submit">Invia richiesta su WhatsApp</button>
+      <div class="bottom-space" aria-hidden="true"></div>
+    </form>
+  </div>
+</main>
 
 <script>
-document.getElementById("f").addEventListener("submit",function(e){
-e.preventDefault();
-const t=`💍 NUOVA RICHIESTA WEDDING TATTOO EXPERIENCE
+const form=document.getElementById("availabilityForm");
+const dateInput=document.getElementById("date");
+const today=new Date();
+today.setMinutes(today.getMinutes()-today.getTimezoneOffset());
+dateInput.min=today.toISOString().split("T")[0];
 
-👰 Sposi: ${names.value}
-📅 Data: ${date.value}
-📍 Location: ${place.value}
-👥 Invitati: ${guests.value||"Da definire"}
-🎁 Pacchetto: ${pack.value}
-📞 Telefono: ${phone.value}
-📧 Email: ${mail.value||"Non indicata"}
+form.addEventListener("submit",function(e){
+  e.preventDefault();
+  if(!form.reportValidity()) return;
+
+  const data=new FormData(form);
+  const text=`💍 NUOVA RICHIESTA WEDDING TATTOO EXPERIENCE
+
+👰 Sposi: ${data.get("names")}
+📅 Data: ${data.get("date")}
+📍 Location: ${data.get("place")}
+👥 Invitati: ${data.get("guests")||"Da definire"}
+🎁 Pacchetto: ${data.get("pack")}
+📞 Telefono: ${data.get("phone")}
+📧 Email: ${data.get("mail")||"Non indicata"}
 
 📝 Note:
-${notes.value||"Nessuna"}`;
-window.open("https://wa.me/393477050250?text="+encodeURIComponent(t),"_blank");
+${data.get("notes")||"Nessuna"}`;
+
+  window.location.href="https://wa.me/393477050250?text="+encodeURIComponent(text);
 });
 </script>
 </body>
