@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Archivio Proposte | Wedding Tattoo Experience</title>
+<style>
+:root{
+  --gold:#c99a36;--gold2:#efd078;--bg:#050505;--card:#0c0b09;
+  --text:#f7f3ea;--muted:#a99f90;--line:rgba(201,154,54,.28)
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:radial-gradient(circle at 50% 0,#171207,#080706 34%,#030303 78%);
+  color:var(--text);font-family:Inter,Arial,sans-serif;min-height:100vh
+}
+.wrap{width:min(1180px,100%);margin:auto;padding:24px 16px 80px}
+header{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px
+}
+h1{margin:0;font-family:Georgia,serif;font-weight:400;color:var(--gold2);font-size:clamp(30px,6vw,50px)}
+.sub{color:var(--muted);margin-top:6px}
+.back{
+  color:var(--gold2);border:1px solid var(--line);padding:12px 16px;border-radius:999px;text-decoration:none
+}
+.toolbar{
+  display:grid;grid-template-columns:1fr 220px;gap:10px;margin-bottom:16px
+}
+input,select,textarea{
+  width:100%;border:1px solid var(--line);border-radius:14px;background:#0b0b0a;
+  color:#fff;padding:13px;font:inherit
+}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:15px 0}
+.stat{padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(201,154,54,.06)}
+.stat strong{display:block;font-size:22px;color:var(--gold2)}
+.stat span{color:var(--muted);font-size:12px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:18px;background:var(--card)}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th,td{padding:13px 12px;text-align:left;border-bottom:1px solid rgba(201,154,54,.12)}
+th{color:var(--gold2);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+td{color:#ddd4c3;font-size:14px}
+tr:last-child td{border-bottom:0}
+.status{min-width:160px;padding:9px}
+.actions{display:flex;gap:7px}
+button{
+  border:1px solid var(--line);background:#15120c;color:var(--gold2);
+  border-radius:10px;padding:9px 11px;cursor:pointer;font-weight:700
+}
+button.danger{color:#ffaaa0;border-color:rgba(255,100,80,.25)}
+.empty{text-align:center;padding:45px 15px;color:var(--muted)}
+.modal{
+  position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,.78);z-index:20;padding:12px
+}
+.modal.show{display:flex}
+.sheet{
+  width:min(720px,100%);max-height:92vh;overflow:auto;border:1px solid var(--line);
+  border-radius:24px 24px 16px 16px;background:#0a0907;padding:22px
+}
+.sheet-head{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.sheet h2{font-family:Georgia,serif;color:var(--gold2);font-size:30px;margin:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.field.full{grid-column:1/-1}
+label{display:block;color:#c8bda9;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}
+.details{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:15px
+}
+.detail{padding:12px;border:1px solid var(--line);border-radius:13px;background:#11100d}
+.detail span{display:block;color:var(--muted);font-size:11px}
+.detail strong{display:block;margin-top:5px;color:#fff}
+.sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.primary{background:linear-gradient(135deg,#e8c66d,#c99a36);color:#14100a;border:0}
+@media(max-width:720px){
+  .toolbar,.stats,.grid,.details,.sheet-actions{grid-template-columns:1fr}
+  header{align-items:flex-start;flex-direction:column}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <div>
+      <h1>Archivio Proposte</h1>
+      <div class="sub">Wedding Tattoo Experience · Step 1</div>
+    </div>
+    <a class="back" href="pacchetti.html">← Torna al configuratore</a>
+  </header>
+
+  <div class="toolbar">
+    <input id="search" type="search" placeholder="Cerca sposi, codice, location o pacchetto…">
+    <select id="statusFilter">
+      <option value="">Tutti gli stati</option>
+      <option>Bozza</option>
+      <option>Proposta inviata</option>
+      <option>In attesa di firma</option>
+      <option>Firmata</option>
+      <option>Acconto richiesto</option>
+      <option>Confermata</option>
+      <option>Scaduta</option>
+      <option>Annullata</option>
+    </select>
+  </div>
+
+  <section class="stats">
+    <div class="stat"><strong id="totalCount">0</strong><span>Proposte totali</span></div>
+    <div class="stat"><strong id="pendingCount">0</strong><span>In lavorazione</span></div>
+    <div class="stat"><strong id="confirmedCount">0</strong><span>Confermate</span></div>
+    <div class="stat"><strong id="valueCount">0 €</strong><span>Valore confermato</span></div>
+  </section>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Codice</th><th>Sposi</th><th>Matrimonio</th><th>Pacchetto</th>
+          <th>Totale</th><th>Acconto</th><th>Stato</th><th>Azioni</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty">Nessuna proposta salvata.</div>
+  </div>
+</main>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <h2 id="detailTitle">Proposta</h2>
+        <div class="sub" id="detailId"></div>
+      </div>
+      <button type="button" id="closeModal">Chiudi</button>
+    </div>
+
+    <div class="details" id="summary"></div>
+
+    <div class="grid">
+      <div class="field">
+        <label>Telefono WhatsApp</label>
+        <input id="editPhone" inputmode="tel" placeholder="Es. 393471234567">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input id="editEmail" type="email">
+      </div>
+      <div class="field full">
+        <label>Stato proposta</label>
+        <select id="editStatus">
+          <option>Bozza</option>
+          <option>Proposta inviata</option>
+          <option>In attesa di firma</option>
+          <option>Firmata</option>
+          <option>Acconto richiesto</option>
+          <option>Confermata</option>
+          <option>Scaduta</option>
+          <option>Annullata</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>Note interne</label>
+        <textarea id="editNotes" rows="4"></textarea>
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="primary" id="saveDetails">Salva modifiche</button>
+      <button id="openWhatsApp">Apri messaggio WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY="wte_proposals_v1";
+let selectedId=null;
+
+const euro=value=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(value||0);
+const date=value=>value?new Intl.DateTimeFormat("it-IT").format(new Date(value+"T12:00:00")):"Da definire";
+
+function read(){
+  try{
+    const data=JSON.parse(localStorage.getItem(KEY)||"[]");
+    return Array.isArray(data)?data:[];
+  }catch(error){return []}
+}
+function write(data){localStorage.setItem(KEY,JSON.stringify(data))}
+function escapeHtml(value){
+  return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[char]));
+}
+
+function render(){
+  const all=read();
+  const query=document.getElementById("search").value.trim().toLowerCase();
+  const status=document.getElementById("statusFilter").value;
+
+  const filtered=all.filter(item=>{
+    const haystack=[item.id,item.names,item.location,item.packageName,item.weddingDate].join(" ").toLowerCase();
+    return (!query||haystack.includes(query))&&(!status||item.status===status);
+  });
+
+  document.getElementById("rows").innerHTML=filtered.map(item=>`
+    <tr>
+      <td><strong>${escapeHtml(item.id)}</strong></td>
+      <td>${escapeHtml(item.names)}</td>
+      <td>${date(item.weddingDate)}</td>
+      <td>${escapeHtml(item.packageName)}</td>
+      <td>${euro(item.total)} + IVA</td>
+      <td>${euro(item.deposit)} + IVA</td>
+      <td>
+        <select class="status" data-status="${escapeHtml(item.id)}">
+          ${["Bozza","Proposta inviata","In attesa di firma","Firmata","Acconto richiesto","Confermata","Scaduta","Annullata"]
+            .map(s=>`<option ${s===item.status?"selected":""}>${s}</option>`).join("")}
+        </select>
+      </td>
+      <td>
+        <div class="actions">
+          <button data-open="${escapeHtml(item.id)}">Apri</button>
+          <button class="danger" data-delete="${escapeHtml(item.id)}">Elimina</button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+
+  document.getElementById("empty").style.display=filtered.length?"none":"block";
+  document.getElementById("totalCount").textContent=all.length;
+  document.getElementById("pendingCount").textContent=all.filter(x=>!["Confermata","Scaduta","Annullata"].includes(x.status)).length;
+  document.getElementById("confirmedCount").textContent=all.filter(x=>x.status==="Confermata").length;
+  document.getElementById("valueCount").textContent=euro(all.filter(x=>x.status==="Confermata").reduce((sum,x)=>sum+(Number(x.total)||0),0));
+
+  document.querySelectorAll("[data-status]").forEach(select=>{
+    select.addEventListener("change",()=>{
+      const data=read();
+      const item=data.find(x=>x.id===select.dataset.status);
+      if(item){
+        item.status=select.value;
+        item.updatedAt=new Date().toISOString();
+        write(data);
+        render();
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-open]").forEach(btn=>btn.addEventListener("click",()=>openProposal(btn.dataset.open)));
+  document.querySelectorAll("[data-delete]").forEach(btn=>btn.addEventListener("click",()=>{
+    if(!confirm("Eliminare definitivamente questa proposta?")) return;
+    write(read().filter(x=>x.id!==btn.dataset.delete));
+    render();
+  }));
+}
+
+function openProposal(id){
+  const item=read().find(x=>x.id===id);
+  if(!item) return;
+  selectedId=id;
+  document.getElementById("detailTitle").textContent=item.names;
+  document.getElementById("detailId").textContent=item.id;
+  document.getElementById("editPhone").value=item.phone||"";
+  document.getElementById("editEmail").value=item.email||"";
+  document.getElementById("editStatus").value=item.status||"Bozza";
+  document.getElementById("editNotes").value=item.notes||"";
+  document.getElementById("summary").innerHTML=[
+    ["Matrimonio",date(item.weddingDate)],
+    ["Location",item.location||"Da definire"],
+    ["Pacchetto",item.packageName],
+    ["Totale",euro(item.total)+" + IVA"],
+    ["Acconto",euro(item.deposit)+" + IVA"],
+    ["Tatuaggi / ore",`${item.tattoos} / ${item.hoursNeeded} h`]
+  ].map(([a,b])=>`<div class="detail"><span>${escapeHtml(a)}</span><strong>${escapeHtml(b)}</strong></div>`).join("");
+  document.getElementById("modal").classList.add("show");
+}
+
+function closeModal(){
+  document.getElementById("modal").classList.remove("show");
+  selectedId=null;
+}
+
+function saveDetails(){
+  const data=read();
+  const item=data.find(x=>x.id===selectedId);
+  if(!item) return;
+  item.phone=document.getElementById("editPhone").value.trim();
+  item.email=document.getElementById("editEmail").value.trim();
+  item.status=document.getElementById("editStatus").value;
+  item.notes=document.getElementById("editNotes").value.trim();
+  item.updatedAt=new Date().toISOString();
+  write(data);
+  render();
+  closeModal();
+}
+
+function openWhatsApp(){
+  const item=read().find(x=>x.id===selectedId);
+  if(!item) return;
+  if(!item.phone){
+    alert("Inserisci prima il numero WhatsApp.");
+    return;
+  }
+  const messages={
+    "Bozza":`Ciao ${item.names}, stiamo preparando la vostra proposta Wedding Tattoo Experience ${item.id}.`,
+    "Proposta inviata":`Ciao ${item.names}, la vostra proposta Wedding Tattoo Experience ${item.id} è pronta. Restiamo a disposizione per qualsiasi chiarimento.`,
+    "In attesa di firma":`Ciao ${item.names}, per procedere potete firmare la proposta ${item.id} e inviarcela direttamente in questa chat.`,
+    "Firmata":`Ciao ${item.names}, abbiamo ricevuto la proposta firmata ${item.id}. A breve riceverete i dati per il versamento dell’acconto.`,
+    "Acconto richiesto":`Ciao ${item.names}, per confermare la data è previsto un acconto di ${euro(item.deposit)} + IVA.`,
+    "Confermata":`Ciao ${item.names}, acconto ricevuto: la data del vostro matrimonio è ufficialmente confermata. Grazie per aver scelto Wedding Tattoo Experience.`,
+    "Scaduta":`Ciao ${item.names}, il periodo di riserva della proposta ${item.id} è terminato. Contattateci per verificare nuovamente la disponibilità della data.`,
+    "Annullata":`Ciao ${item.names}, la proposta ${item.id} risulta annullata. Restiamo disponibili per qualsiasi chiarimento.`
+  };
+  const phone=item.phone.replace(/\D/g,"");
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(messages[item.status]||messages.Bozza)}`,"_blank");
+}
+
+document.getElementById("search").addEventListener("input",render);
+document.getElementById("statusFilter").addEventListener("change",render);
+document.getElementById("closeModal").addEventListener("click",closeModal);
+document.getElementById("saveDetails").addEventListener("click",saveDetails);
+document.getElementById("openWhatsApp").addEventListener("click",openWhatsApp);
+document.getElementById("modal").addEventListener("click",event=>{
+  if(event.target.id==="modal") closeModal();
+});
+render();
+</script>
+</body>
+</html>

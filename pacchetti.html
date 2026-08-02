@@ -241,6 +241,18 @@ input:focus,select:focus{border-color:var(--gold2)}
 }
 
 
+
+.archive-btn{
+  display:block;width:100%;border:1px solid rgba(201,154,54,.55);border-radius:999px;padding:16px;
+  background:rgba(201,154,54,.10);color:var(--gold2);font:inherit;font-weight:800;cursor:pointer
+}
+.archive-link{
+  display:block;text-align:center;margin-top:10px;color:#bcae93;font-size:13px;text-decoration:none
+}
+.save-feedback{
+  margin-top:10px;text-align:center;color:#8fd6a6;font-size:13px;min-height:18px
+}
+
 </style>
 </head>
 <body>
@@ -355,7 +367,10 @@ input:focus,select:focus{border-color:var(--gold2)}
       <div class="action-grid">
         <a class="cta" id="whatsappCta" href="#" target="_blank" rel="noopener">Richiedi questo pacchetto su WhatsApp</a>
         <button class="pdf-btn" id="downloadPdf" type="button">Scarica il preventivo PDF</button>
+        <button class="archive-btn" id="saveProposal" type="button">Salva proposta in archivio</button>
+        <a class="archive-btn" href="archivio-proposte.html">Apri archivio proposte</a>
       </div>
+      <div class="save-feedback" id="saveFeedback"></div>
       <p class="warning" id="travelWarning"></p>
     </div>
   </section>
@@ -1177,8 +1192,90 @@ async function runAnalysis(){
   analysisOverlay.setAttribute("aria-hidden","true");
 }
 
+
+const WTE_ARCHIVE_KEY="wte_proposals_v1";
+
+function getProposalArchive(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(WTE_ARCHIVE_KEY)||"[]");
+    return Array.isArray(parsed)?parsed:[];
+  }catch(error){
+    return [];
+  }
+}
+
+function createProposalId(){
+  const now=new Date();
+  const datePart=[
+    now.getFullYear(),
+    String(now.getMonth()+1).padStart(2,"0"),
+    String(now.getDate()).padStart(2,"0")
+  ].join("");
+  const random=Math.random().toString(36).slice(2,7).toUpperCase();
+  return `WTE-${datePart}-${random}`;
+}
+
+function saveCurrentProposal(){
+  const feedback=document.getElementById("saveFeedback");
+
+  if(!currentQuote){
+    feedback.textContent="Prima calcola il pacchetto consigliato.";
+    return;
+  }
+
+  const archive=getProposalArchive();
+  const existingId=currentQuote.archiveId;
+  const now=new Date().toISOString();
+
+  const proposal={
+    id:existingId||createProposalId(),
+    createdAt:existingId
+      ? (archive.find(item=>item.id===existingId)?.createdAt||now)
+      : now,
+    updatedAt:now,
+    status:"Bozza",
+    names:currentQuote.names||"Sposi non indicati",
+    weddingDate:currentQuote.date||"",
+    startTime:currentQuote.startTime||"",
+    location:currentQuote.location||"",
+    km:Number(currentQuote.km)||0,
+    guests:Number(currentQuote.guests)||0,
+    interest:Number(currentQuote.interest)||0,
+    tattoos:Number(currentQuote.tattoos)||0,
+    hoursNeeded:Number(currentQuote.hoursNeeded)||0,
+    packageName:currentQuote.recommended.name,
+    packageId:currentQuote.recommended.id,
+    total:Number(currentQuote.recommended.total)||0,
+    deposit:Math.round((Number(currentQuote.recommended.total)||0)*DEPOSIT_PERCENT/100),
+    extraHours:Number(currentQuote.recommended.extraHours)||0,
+    extraKm:Number(currentQuote.recommended.extraKm)||0,
+    advice:currentQuote.advice||"",
+    phone:"",
+    email:"",
+    notes:""
+  };
+
+  const index=archive.findIndex(item=>item.id===proposal.id);
+  if(index>=0){
+    proposal.status=archive[index].status||proposal.status;
+    proposal.phone=archive[index].phone||"";
+    proposal.email=archive[index].email||"";
+    proposal.notes=archive[index].notes||"";
+    archive[index]=proposal;
+  }else{
+    archive.unshift(proposal);
+  }
+
+  localStorage.setItem(WTE_ARCHIVE_KEY,JSON.stringify(archive));
+  currentQuote.archiveId=proposal.id;
+
+  feedback.textContent=`Proposta ${proposal.id} salvata nell’archivio.`;
+  setTimeout(()=>{feedback.textContent="";},4500);
+}
+
 document.getElementById("calculate").addEventListener("click",runAnalysis);
 document.getElementById("downloadPdf").addEventListener("click",downloadQuotePdf);
+document.getElementById("saveProposal").addEventListener("click",saveCurrentProposal);
 
 </script>
 </div>
