@@ -116,6 +116,30 @@ input:focus,select:focus{border-color:var(--gold2)}
 .advice-box h3{margin:0 0 8px;font-family:Georgia,serif;font-weight:400;color:var(--gold2);font-size:26px}
 .advice-box p{margin:0;color:#ded4c2;line-height:1.65}
 
+
+.coverage-section,.timeline-section{
+  margin:0 18px 20px;padding:18px;border:1px solid rgba(201,154,54,.24);
+  border-radius:18px;background:#0b0b0a
+}
+.coverage-section h3,.timeline-section h3{
+  margin:0 0 12px;font-family:Georgia,serif;font-weight:400;color:var(--gold2);font-size:25px
+}
+.coverage-track{height:15px;border-radius:999px;background:#25221c;overflow:hidden;border:1px solid rgba(201,154,54,.20)}
+.coverage-fill{height:100%;width:0;background:linear-gradient(90deg,#c99a36,#f0cf75);transition:width .7s ease}
+.coverage-copy{margin:10px 0 0;color:#d6cdbc;line-height:1.55}
+.timeline{display:grid;gap:10px}
+.timeline-item{display:grid;grid-template-columns:74px 1fr;gap:12px;align-items:start;padding:10px 0;border-bottom:1px solid rgba(201,154,54,.14)}
+.timeline-item:last-child{border-bottom:0}
+.timeline-time{color:var(--gold2);font-weight:800}
+.timeline-copy strong{display:block;margin-bottom:3px;color:#f0e8d9}
+.timeline-copy span{color:#aaa193;font-size:13px}
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pdf-btn{
+  display:block;width:100%;border:1px solid var(--gold);border-radius:999px;padding:16px;
+  background:transparent;color:var(--gold2);font:inherit;font-weight:800;cursor:pointer
+}
+@media(max-width:620px){.action-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -130,6 +154,21 @@ input:focus,select:focus{border-color:var(--gold2)}
 
   <section class="panel">
     <div class="grid">
+      <div class="field">
+        <label for="coupleNames">Nomi degli sposi</label>
+        <input id="coupleNames" placeholder="Es. Marco e Giulia">
+      </div>
+
+      <div class="field">
+        <label for="weddingDate">Data del matrimonio</label>
+        <input id="weddingDate" type="date">
+      </div>
+
+      <div class="field">
+        <label for="startTime">Ora inizio servizio</label>
+        <input id="startTime" type="time" value="17:00">
+      </div>
+
       <div class="field full">
         <label for="location">Indirizzo della location</label>
         <div class="location-row">
@@ -187,13 +226,27 @@ input:focus,select:focus{border-color:var(--gold2)}
     </div>
 
 
+    <div class="coverage-section">
+      <h3>Copertura stimata dell’evento</h3>
+      <div class="coverage-track"><div class="coverage-fill" id="coverageFill"></div></div>
+      <p class="coverage-copy" id="coverageCopy"></p>
+    </div>
+
+    <div class="timeline-section">
+      <h3>Simulazione della giornata</h3>
+      <div class="timeline" id="timeline"></div>
+    </div>
+
     <div class="advice-box">
       <h3>Se fossi al tuo posto...</h3>
       <p id="personalAdvice"></p>
     </div>
 
     <div class="cta-wrap">
-      <a class="cta" id="whatsappCta" href="#" target="_blank" rel="noopener">Richiedi questo pacchetto su WhatsApp</a>
+      <div class="action-grid">
+        <a class="cta" id="whatsappCta" href="#" target="_blank" rel="noopener">Richiedi questo pacchetto su WhatsApp</a>
+        <button class="pdf-btn" id="downloadPdf" type="button">Scarica il preventivo PDF</button>
+      </div>
       <p class="warning" id="travelWarning"></p>
     </div>
   </section>
@@ -209,10 +262,12 @@ input:focus,select:focus{border-color:var(--gold2)}
     <div class="analysis-step" data-step="4">Ricerca della soluzione con più valore</div>
   </div>
 
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script>
 const STUDIO = "Tattoo Beauty Saloon, Via Torino 1A, 10055 Condove TO";
 const EXTRA_HOUR_PRICE = 150;
 const EXTRA_KM_PRICE = 1.00; // tariffa per ogni km oltre la soglia inclusa, solo andata
+let currentQuote=null;
 
 const PACKAGES = [
   {
@@ -304,7 +359,126 @@ function recommend(calculated,tattoos,hoursNeeded,km){
   return best;
 }
 
+
+function addHours(time,decimalHours){
+  const [h,m]=(time||"17:00").split(":").map(Number);
+  const total=Math.round(h*60+m+decimalHours*60);
+  const normalized=((total%1440)+1440)%1440;
+  return String(Math.floor(normalized/60)).padStart(2,"0")+":"+String(normalized%60).padStart(2,"0");
+}
+
+function buildTimeline(startTime,tattoos,hoursNeeded){
+  const timeline=document.getElementById("timeline");
+  const points=[0];
+  for(let h=2;h<hoursNeeded;h+=2) points.push(h);
+  if(points[points.length-1]!==hoursNeeded) points.push(hoursNeeded);
+
+  timeline.innerHTML=points.map((elapsed,index)=>{
+    const completed=Math.min(tattoos,Math.round(elapsed*3));
+    const title=index===0 ? "Inizio Wedding Tattoo" : elapsed===hoursNeeded ? "Conclusione stimata" : `${completed} tatuaggi completati`;
+    const detail=index===0
+      ? "Allestimento operativo e accoglienza dei primi ospiti."
+      : elapsed===hoursNeeded
+        ? `Previsione complessiva: circa ${tattoos} tatuaggi.`
+        : `Avanzamento prudenziale calcolato su 3 tatuaggi all’ora.`;
+    return `<div class="timeline-item">
+      <div class="timeline-time">${addHours(startTime,elapsed)}</div>
+      <div class="timeline-copy"><strong>${title}</strong><span>${detail}</span></div>
+    </div>`;
+  }).join("");
+}
+
+function buildCoverage(recommended,tattoos){
+  const includedCoverage=Math.min(100,Math.round((recommended.tattoos/tattoos)*100));
+  document.getElementById("coverageFill").style.width=includedCoverage+"%";
+  const copy=includedCoverage>=100
+    ? `Il pacchetto ${recommended.name} copre il 100% della richiesta stimata con le ore incluse.`
+    : `Le ore incluse coprono circa il ${includedCoverage}% della richiesta stimata. Le restanti richieste vengono coperte dalle ${recommended.extraHours} ore extra già conteggiate nel totale.`;
+  document.getElementById("coverageCopy").textContent=copy;
+}
+
+function downloadQuotePdf(){
+  if(!currentQuote) return;
+  if(!window.jspdf?.jsPDF){
+    alert("Il generatore PDF non è disponibile. Riprova tra qualche secondo.");
+    return;
+  }
+
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:"mm",format:"a4"});
+  const q=currentQuote;
+  const gold=[201,154,54];
+  const black=[8,8,8];
+
+  doc.setFillColor(...black);
+  doc.rect(0,0,210,297,"F");
+  doc.setDrawColor(...gold);
+  doc.rect(10,10,190,277);
+
+  doc.setTextColor(...gold);
+  doc.setFont("times","normal");
+  doc.setFontSize(24);
+  doc.text("WEDDING TATTOO EXPERIENCE",105,28,{align:"center"});
+  doc.setFontSize(10);
+  doc.text("LOVE. MARKED. FOREVER.",105,36,{align:"center"});
+
+  doc.setTextColor(245,242,234);
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(12);
+
+  let y=52;
+  const line=(label,value)=>{
+    doc.setTextColor(...gold);
+    doc.text(label,20,y);
+    doc.setTextColor(245,242,234);
+    const lines=doc.splitTextToSize(String(value),115);
+    doc.text(lines,70,y);
+    y+=Math.max(8,lines.length*6);
+  };
+
+  line("Sposi",q.names||"Non indicati");
+  line("Data",q.date||"Da definire");
+  line("Location",q.location);
+  line("Distanza",`${q.km} km - ${q.km*2} km A/R`);
+  line("Invitati",q.guests);
+  line("Tatuaggi stimati",q.tattoos);
+  line("Ore previste",q.hoursNeeded);
+  line("Pacchetto consigliato",q.recommended.name);
+  line("Totale stimato",`${euro(q.recommended.total)} + IVA`);
+  line("Ore extra",`${q.recommended.extraHours} - ${euro(q.recommended.extraHourCost)}`);
+  line("Trasferta extra",`${q.recommended.extraKm} km - ${euro(q.recommended.extraKmCost)}`);
+
+  y+=5;
+  doc.setTextColor(...gold);
+  doc.setFont("times","normal");
+  doc.setFontSize(18);
+  doc.text("Il nostro consiglio",20,y);
+  y+=10;
+
+  doc.setTextColor(235,227,213);
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(11);
+  const adviceLines=doc.splitTextToSize(q.advice,168);
+  doc.text(adviceLines,20,y);
+  y+=adviceLines.length*6+12;
+
+  doc.setTextColor(...gold);
+  doc.setFontSize(14);
+  doc.text("Richiedi il preventivo definitivo",20,y);
+  y+=8;
+  doc.setTextColor(235,227,213);
+  doc.setFontSize(10);
+  doc.text("WhatsApp: +39 347 705 0250",20,y);
+  doc.text("Tattoo Beauty Saloon - Via Torino 1A, Condove (TO)",20,y+6);
+
+  const safeName=(q.names||"wedding").replace(/[^a-z0-9]+/gi,"_").replace(/^_|_$/g,"");
+  doc.save(`Preventivo_Wedding_Tattoo_${safeName}.pdf`);
+}
+
 function performCalculation(){
+  const names=document.getElementById("coupleNames").value.trim();
+  const date=document.getElementById("weddingDate").value;
+  const startTime=document.getElementById("startTime").value||"17:00";
   const guests=Math.max(1,Number(document.getElementById("guests").value)||1);
   const interest=Math.max(0,Number(document.getElementById("interest").value)||0);
   const km=Math.max(0,Number(document.getElementById("km").value)||0);
@@ -354,6 +528,13 @@ function performCalculation(){
   }
 
   document.getElementById("personalAdvice").textContent=personalAdvice;
+  buildCoverage(recommended,tattoos);
+  buildTimeline(startTime,tattoos,hoursNeeded);
+
+  currentQuote={
+    names,date,startTime,location,km,guests,interest,tattoos,hoursNeeded,recommended,
+    advice:personalAdvice
+  };
 
   const packages=document.getElementById("packages");
   packages.innerHTML="";
@@ -496,6 +677,7 @@ async function runAnalysis(){
 }
 
 document.getElementById("calculate").addEventListener("click",runAnalysis);
+document.getElementById("downloadPdf").addEventListener("click",downloadQuotePdf);
 
 </script>
 </div>
