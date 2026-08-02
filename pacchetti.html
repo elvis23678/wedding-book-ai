@@ -677,6 +677,24 @@ function formatDateObject(date){
   return new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"numeric"}).format(date);
 }
 
+
+function compactAdviceForPdf(text,maxChars=640){
+  const clean=String(text||"").replace(/\s+/g," ").trim();
+  if(clean.length<=maxChars) return clean;
+
+  const sentences=clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[clean];
+  let out="";
+
+  for(const sentence of sentences){
+    const candidate=(out+" "+sentence.trim()).trim();
+    if(candidate.length>maxChars) break;
+    out=candidate;
+  }
+
+  if(!out) out=clean.slice(0,maxChars).trim();
+  return out.replace(/[,\s]+$/,"")+".";
+}
+
 function downloadQuotePdf(){
   if(!currentQuote) return;
   if(!window.jspdf?.jsPDF){
@@ -770,7 +788,7 @@ function downloadQuotePdf(){
     if(sealImage && sealImage.complete && sealImage.naturalWidth){
       try{
         // Sigillo opaco, senza ombra esterna: deve sembrare impresso sulla pergamena.
-        doc.addImage(sealImage,"PNG",x-14.5,y-14.5,29,29,undefined,"FAST",rotation);
+        doc.addImage(sealImage,"PNG",x-12.5,y-12.5,25,25,undefined,"FAST",rotation);
         return;
       }catch(error){}
     }
@@ -833,7 +851,7 @@ function downloadQuotePdf(){
     doc.setFont("times","italic");
     doc.setFontSize(7.4);
     doc.setTextColor(...muted);
-    doc.text(`Documento riservato · ${proposalId} · Pagina ${pageNo}/2`,105,279,{align:"center"});
+    doc.text(`Documento riservato · WTE Proposal v1.0 · ${proposalId} · Pagina ${pageNo}/2`,105,279,{align:"center"});
     doc.text("Tattoo Beauty Saloon · Via Torino 1A, Condove (TO) · WhatsApp +39 347 705 0250",105,284,{align:"center"});
   }
 
@@ -853,7 +871,7 @@ function downloadQuotePdf(){
   doc.text("Proposta riservata · Serie WTE",20,y);
 
   documentBox(61);
-  addSeal(174,238,-6);
+  
 
   y+=15;
   doc.setFont("times","normal");
@@ -915,9 +933,16 @@ function downloadQuotePdf(){
   doc.setFontSize(9.7);
   doc.setTextColor(...ink);
 
-  const advice=`Gentili Sposi,\n\n${q.advice}\n\nRimango personalmente a disposizione per qualsiasi chiarimento. Sarà un piacere contribuire a rendere unico il vostro matrimonio.`;
-  const adviceLines=doc.splitTextToSize(advice,126);
-  doc.text(adviceLines,22,y);
+  const adviceBody=compactAdviceForPdf(q.advice,560);
+  const advice=`Gentili Sposi,\n\n${adviceBody}\n\nRimango personalmente a disposizione per qualsiasi chiarimento. Sarà un piacere contribuire a rendere unico il vostro matrimonio.`;
+  let adviceLines=doc.splitTextToSize(advice,166);
+
+  if(adviceLines.length>16){
+    doc.setFontSize(8.7);
+    adviceLines=doc.splitTextToSize(advice,166);
+  }
+
+  doc.text(adviceLines.slice(0,16),22,y);
 
   footer(1);
 
@@ -933,7 +958,7 @@ function downloadQuotePdf(){
   doc.text("DICHIARAZIONE DI ACCETTAZIONE",20,y);
   y+=10;
 
-  addSeal(104,226,5);
+  addSeal(105,206,5);
 
   doc.setFont("times","normal");
   doc.setFontSize(10.2);
@@ -990,7 +1015,7 @@ function downloadQuotePdf(){
   doc.text("Firma cliente 1",89,y+23);
   doc.text("Firma cliente 2",156,y+23);
 
-  y+=35;
+  y+=42;
   doc.setTextColor(...muted);
   doc.setFontSize(8);
   doc.text("Per Wedding Tattoo Experience",178,y,{align:"right"});
