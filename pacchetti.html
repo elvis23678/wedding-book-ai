@@ -131,15 +131,10 @@ input:focus,select:focus{border-color:var(--gold2)}
           <option value="60">60%</option>
         </select>
       </div>
-
-      <div class="field">
-        <label for="extraHour">Prezzo ora extra</label>
-        <input id="extraHour" type="number" min="0" step="10" value="150">
-      </div>
     </div>
 
     <button class="calculate" id="calculate" type="button">Calcola il pacchetto consigliato</button>
-    <p class="note">La capacità viene calcolata su una media prudenziale di 3 tatuaggi all’ora. I chilometri devono essere letti dal percorso reale su Google Maps e inseriti nel campo dedicato.</p>
+    <p class="note">La capacità viene calcolata su una media prudenziale di 3 tatuaggi all’ora. Il prezzo delle ore extra e il supplemento chilometrico sono già impostati nel configuratore. I chilometri devono essere letti dal percorso reale su Google Maps e inseriti nel campo dedicato.</p>
   </section>
 
   <section class="result" id="result">
@@ -172,6 +167,8 @@ input:focus,select:focus{border-color:var(--gold2)}
 
 <script>
 const STUDIO = "Tattoo Beauty Saloon, Via Torino 1A, 10055 Condove TO";
+const EXTRA_HOUR_PRICE = 150;
+const EXTRA_KM_PRICE = 1.00; // tariffa per ogni km oltre la soglia inclusa, solo andata
 
 const PACKAGES = [
   {
@@ -213,32 +210,44 @@ function updateMapsLink(){
 document.getElementById("location").addEventListener("input",updateMapsLink);
 updateMapsLink();
 
-function packageCost(pkg,hoursNeeded,extraHourPrice){
+function packageCost(pkg,hoursNeeded,km){
   const extraHours=Math.max(0,hoursNeeded-pkg.hours);
+  const extraKm=pkg.includedKm===Infinity ? 0 : Math.max(0,km-pkg.includedKm);
+  const extraHourCost=extraHours*EXTRA_HOUR_PRICE;
+  const extraKmCost=extraKm*EXTRA_KM_PRICE*2;
   return {
     ...pkg,
     extraHours,
-    extraCost:extraHours*extraHourPrice,
-    total:pkg.price+(extraHours*extraHourPrice)
+    extraKm,
+    extraHourCost,
+    extraKmCost,
+    total:pkg.price+extraHourCost+extraKmCost
   };
 }
 
 function recommend(calculated,tattoos,hoursNeeded,km){
-  if(hoursNeeded>=7 || tattoos>18) return calculated.find(p=>p.id==="luxury");
-  if(hoursNeeded>=5 || tattoos>12 || km>30) return calculated.find(p=>p.id==="signature");
-  return calculated.find(p=>p.id==="essential");
+  const sorted=[...calculated].sort((a,b)=>a.total-b.total);
+  let best=sorted[0];
+
+  const order={essential:1,signature:2,luxury:3};
+  const next=sorted.find(p=>order[p.id]>order[best.id]);
+
+  if(next && (next.total-best.total)<=150){
+    best=next;
+  }
+
+  return best;
 }
 
 function calculate(){
   const guests=Math.max(1,Number(document.getElementById("guests").value)||1);
   const interest=Math.max(0,Number(document.getElementById("interest").value)||0);
   const km=Math.max(0,Number(document.getElementById("km").value)||0);
-  const extraHourPrice=Math.max(0,Number(document.getElementById("extraHour").value)||0);
   const location=document.getElementById("location").value.trim()||"Da definire";
 
   const tattoos=Math.max(1,Math.round(guests*(interest/100)));
   const hoursNeeded=Math.max(1,Math.ceil(tattoos/3));
-  const calculated=PACKAGES.map(p=>packageCost(p,hoursNeeded,extraHourPrice));
+  const calculated=PACKAGES.map(p=>packageCost(p,hoursNeeded,km));
   const recommended=recommend(calculated,tattoos,hoursNeeded,km);
 
   document.getElementById("tattoosMetric").textContent=tattoos;
@@ -247,7 +256,7 @@ function calculate(){
   document.getElementById("returnKmMetric").textContent=(km*2)+" km";
   document.getElementById("recommendedName").textContent="⭐ "+recommended.name;
   document.getElementById("recommendationText").textContent=
-    `Con circa ${tattoos} tatuaggi previsti e ${hoursNeeded} ore necessarie, ${recommended.name} offre il miglior equilibrio tra copertura dell’evento, margine di sicurezza e costo complessivo.`;
+    `Con circa ${tattoos} tatuaggi previsti, ${hoursNeeded} ore necessarie e ${km} km di distanza, ${recommended.name} risulta il pacchetto più conveniente considerando ore incluse, chilometri inclusi ed eventuali extra.`;
 
   const packages=document.getElementById("packages");
   packages.innerHTML="";
@@ -264,38 +273,46 @@ function calculate(){
         <li>Fino a circa ${pkg.tattoos} tatuaggi</li>
         <li>${pkg.travelText}</li>
         <li>${pkg.extraHours ? pkg.extraHours+" ore extra necessarie" : "Nessuna ora extra necessaria"}</li>
-        <li>${travelIncluded ? "Trasferta compresa" : "Supplemento trasferta da confermare"}</li>
+        <li>${travelIncluded ? "Trasferta compresa" : pkg.extraKm+" km oltre soglia inclusa"}</li>
       </ul>
       <div class="total">
         <span>Totale stimato</span>
         <strong>${euro(pkg.total)} + IVA</strong>
-        ${pkg.extraCost ? `<small>incluse ${euro(pkg.extraCost)} di ore extra</small>` : ""}
+        ${(pkg.extraHourCost||pkg.extraKmCost) ? `<small>${pkg.extraHourCost ? euro(pkg.extraHourCost)+" ore extra" : ""}${pkg.extraHourCost&&pkg.extraKmCost ? " · " : ""}${pkg.extraKmCost ? euro(pkg.extraKmCost)+" trasferta extra" : ""}</small>` : ""}
       </div>`;
     packages.appendChild(div);
   });
 
   const reasons=[];
-  if(recommended.id==="luxury"){
-    reasons.push("Copre fino a circa 24 tatuaggi senza comprimere i tempi.");
-    reasons.push("Offre il margine migliore per richieste impreviste durante l’evento.");
-    reasons.push("Evita di dipendere da troppe ore extra.");
-    reasons.push("Include la trasferta in tutto il Piemonte.");
-  }else if(recommended.id==="signature"){
-    reasons.push("È il miglior equilibrio tra durata, capacità e prezzo.");
-    reasons.push("Gestisce fino a circa 18 tatuaggi con tempi più rilassati.");
-    reasons.push("Include la trasferta entro 50 km.");
-    if(calculated.find(p=>p.id==="signature").extraHours>0) reasons.push("Le ore extra vengono già conteggiate nel totale stimato.");
+  const cheapest=[...calculated].sort((a,b)=>a.total-b.total)[0];
+  if(recommended.id!==cheapest.id){
+    reasons.push(`Costa solo ${euro(recommended.total-cheapest.total)} in più rispetto alla soluzione più economica, ma offre un margine operativo superiore.`);
   }else{
-    reasons.push("È sufficiente per un matrimonio intimo o con poche richieste.");
-    reasons.push("Copre fino a circa 12 tatuaggi.");
-    reasons.push("Include la trasferta entro 30 km.");
+    reasons.push("È la soluzione con il totale stimato più conveniente considerando ore e chilometri.");
+  }
+  if(recommended.extraHours===0){
+    reasons.push("Non richiede ore extra.");
+  }else{
+    reasons.push(`Comprende già nel calcolo ${recommended.extraHours} ore extra al prezzo corretto di ${euro(EXTRA_HOUR_PRICE)} l’una.`);
+  }
+  if(recommended.extraKm===0){
+    reasons.push("La distanza rientra nei chilometri inclusi.");
+  }else{
+    reasons.push(`Il totale include ${recommended.extraKm} km oltre soglia, conteggiati automaticamente andata e ritorno.`);
+  }
+  if(recommended.id==="luxury"){
+    reasons.push("Offre il margine migliore per richieste impreviste durante l’evento.");
+  }else if(recommended.id==="signature"){
+    reasons.push("Rappresenta il miglior equilibrio tra durata, copertura e prezzo.");
+  }else{
+    reasons.push("È adatto a eventi intimi con un numero limitato di richieste.");
   }
   document.getElementById("reasonsList").innerHTML=reasons.map(r=>`<li>${r}</li>`).join("");
 
   const travelIncluded=recommended.includedKm===Infinity || km<=recommended.includedKm;
-  document.getElementById("travelWarning").textContent=travelIncluded
+  document.getElementById("travelWarning").textContent=recommended.extraKm===0
     ? "La trasferta risulta compresa nel pacchetto consigliato."
-    : "La distanza supera quella inclusa: il supplemento trasferta verrà confermato dallo staff.";
+    : `Il totale stimato comprende ${recommended.extraKm} km oltre la soglia inclusa, calcolati andata e ritorno.`;
 
   const message=`💍 CONFIGURAZIONE WEDDING TATTOO EXPERIENCE
 
@@ -307,8 +324,9 @@ function calculate(){
 
 ⭐ Pacchetto consigliato: ${recommended.name}
 💶 Totale stimato: ${euro(recommended.total)} + IVA
-➕ Ore extra: ${recommended.extraHours}
-${travelIncluded ? "🚗 Trasferta inclusa" : "🚗 Supplemento trasferta da confermare"}
+➕ Ore extra: ${recommended.extraHours} (${euro(recommended.extraHourCost)})
+🚗 Km extra: ${recommended.extraKm} (${euro(recommended.extraKmCost)})
+${recommended.extraKm===0 ? "🚗 Trasferta inclusa" : "🚗 Trasferta extra già stimata"}
 
 Vorrei ricevere un preventivo definitivo.`;
 
