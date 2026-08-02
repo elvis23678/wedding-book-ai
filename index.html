@@ -43,24 +43,21 @@
     .availability-modal{
 position:fixed;
 inset:0;
-width:100%;
-height:100dvh;
-max-height:100dvh;
-overflow:hidden;
-display:flex;
+display:none;
 flex-direction:column;
-z-index:43;
 background:linear-gradient(180deg,rgba(15,13,9,.995),rgba(3,3,3,.995));
+z-index:1000;
 }
-    .availability-modal.open{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+.availability-modal.open{display:flex;}
     .availability-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 14px;border-bottom:1px solid rgba(201,154,54,.18)}
     .availability-head strong{font-family:Georgia,serif;color:var(--gold2);font-size:20px;font-weight:400}
     .availability-close{width:38px;height:38px;border-radius:50%;border:1px solid rgba(201,154,54,.28);background:transparent;color:var(--gold2);font-size:22px;cursor:pointer}
     .availability-body{
 flex:1;
 overflow-y:auto;
+overflow-x:hidden;
 -webkit-overflow-scrolling:touch;
-padding:16px 16px 100px;
+padding:16px 16px 120px;
 }
     .availability-intro{margin:0 0 14px;color:#cfc5b3;font-size:13px;line-height:1.5}
     .availability-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
@@ -78,7 +75,7 @@ padding:16px 16px 100px;
     .availability-status.show{display:block}
     @media(max-width:700px){.availability-backdrop{display:none}.availability-modal{left:0;top:0;width:100%;height:100dvh;max-height:none;border-radius:0;border-left:0;border-right:0;border-bottom:0;transform:translateY(18px)}.availability-modal.open{transform:none}.availability-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
 
-  body.modal-open{overflow:hidden;touch-action:none;}
+  body.modal-open{overflow:hidden;}
 </style>
 </head>
 <body>
