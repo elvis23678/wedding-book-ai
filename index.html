@@ -120,5 +120,20 @@ chatForm.addEventListener('submit',e=>{e.preventDefault();const m=chatInput.valu
 
 updateUI();})();
 </script>
+
+<style>
+.contact-fab{position:fixed;right:18px;bottom:18px;z-index:9999;background:#111;color:#d4af37;border:1px solid #d4af37;border-radius:999px;padding:12px 18px;font-family:sans-serif;cursor:pointer}
+.contact-panel{display:none;position:fixed;right:18px;bottom:70px;background:#111;color:#fff;border:1px solid #444;border-radius:14px;padding:14px;z-index:10000;width:260px;font-family:sans-serif}
+.contact-panel a{display:block;color:#d4af37;text-decoration:none;padding:8px 0}
+</style>
+<div class="contact-fab" onclick="var p=document.getElementById('contactPanel');p.style.display=p.style.display=='block'?'none':'block'">Contattaci</div>
+<div id="contactPanel" class="contact-panel">
+<b>Wedding Tattoo Experience</b>
+<a href="tel:011232456">📞 011 232456</a>
+<a href="https://wa.me/393477050250?text=Buongiorno,%20vorrei%20informazioni%20sul%20Wedding%20Tattoo%20Experience.">💬 WhatsApp</a>
+<a href="https://instagram.com/tattoo.beautycondove">📷 Instagram</a>
+<a href="https://www.tattoobeautysaloon.it">🌐 Sito Web</a>
+<a href="https://maps.google.com/?q=Via+Torino+1A,+10055+Condove+TO">📍 Google Maps</a>
+</div>
 </body>
 </html>
