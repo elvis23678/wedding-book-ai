@@ -263,7 +263,127 @@ input:focus,select:focus{border-color:var(--gold2)}
   </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="wedding-expert.js"></script>
+
+<script>
+(() => {
+  "use strict";
+
+  const pick = (items) => items[Math.floor(Math.random() * items.length)];
+
+  const openings = [
+    "Ho analizzato con attenzione i dati del vostro matrimonio.",
+    "Mi sono preso qualche secondo per confrontare tutti gli elementi dell’evento.",
+    "Dalla simulazione emergono alcuni aspetti importanti.",
+    "Guardando insieme invitati, distanza e ore necessarie, il quadro è abbastanza chiaro.",
+    "Ho confrontato i tre pacchetti come farei durante una consulenza in studio."
+  ];
+
+  const humanNotes = [
+    "Durante un matrimonio preferisco sempre lasciare un po’ di margine, piuttosto che lavorare con il tempo contato.",
+    "La cosa più importante è che gli invitati vivano l’esperienza senza fretta e senza code inutili.",
+    "Non guarderei soltanto il prezzo iniziale: ore extra e trasferta possono cambiare molto la convenienza reale.",
+    "In un evento preferisco evitare sorprese e avere il tempo necessario per lavorare con calma.",
+    "Un piccolo margine in più spesso fa la differenza tra un servizio semplicemente presente e un’esperienza davvero ricordata."
+  ];
+
+  const endings = {
+    essential: [
+      "Per un evento di queste dimensioni sceglierei Essential senza aggiungere complessità inutili.",
+      "Nel vostro caso Essential è sufficiente e mantiene il miglior equilibrio tra costo e servizio.",
+      "Se il numero di richieste resterà vicino alla stima, Essential è la scelta più razionale."
+    ],
+    signature: [
+      "Nel vostro caso Signature rappresenta davvero il punto di equilibrio.",
+      "Se fossi seduto con voi in studio, vi indirizzerei su Signature.",
+      "Signature vi permette di avere una buona copertura senza salire inutilmente di budget."
+    ],
+    luxury: [
+      "Per questo motivo sceglierei Luxury.",
+      "Se dovessi consigliarlo a una coppia di amici, sceglierei Luxury senza esitazioni.",
+      "Luxury è la soluzione che mi farebbe vivere l’evento con maggiore tranquillità.",
+      "Per un matrimonio così preferirei avere il margine del Luxury piuttosto che rischiare di dire di no a qualche invitato."
+    ]
+  };
+
+  function buildObservations(data) {
+    const out = [];
+
+    if (data.guests >= 120) {
+      out.push("Il numero di invitati è importante e può generare richieste distribuite per tutta la durata del servizio.");
+    } else if (data.guests >= 70) {
+      out.push("Il numero di invitati è ideale per creare un flusso costante, senza trasformare il servizio in una corsa.");
+    } else {
+      out.push("Essendo un evento più raccolto, la gestione delle richieste sarà probabilmente più semplice e ordinata.");
+    }
+
+    if (data.km > 50) {
+      out.push("La distanza della location incide parecchio sulla scelta, perché rende meno convenienti i pacchetti con trasferta limitata.");
+    } else if (data.km > 30) {
+      out.push("La location supera la soglia inclusa nell’Essential, quindi Signature o Luxury acquistano più valore.");
+    } else {
+      out.push("La distanza rientra bene nelle soglie previste e non pesa in modo significativo sulla scelta.");
+    }
+
+    if (data.hoursNeeded >= 9) {
+      out.push("La stima delle ore è alta: scegliere un pacchetto troppo corto significherebbe aggiungere molte ore extra.");
+    } else if (data.hoursNeeded >= 6) {
+      out.push("Le ore richieste sono compatibili con una presenza importante durante l’evento e richiedono un pacchetto ben dimensionato.");
+    } else {
+      out.push("Le ore previste restano contenute e permettono di lavorare con un pacchetto più essenziale.");
+    }
+
+    if (data.recommended.extraHours >= 3) {
+      out.push(`Anche il pacchetto consigliato richiede ${data.recommended.extraHours} ore extra, già considerate nel totale.`);
+    } else if (data.recommended.extraHours > 0) {
+      out.push(`È prevista ${data.recommended.extraHours} ora extra, già conteggiata nel totale stimato.`);
+    } else {
+      out.push("Non risultano necessarie ore extra sul pacchetto consigliato.");
+    }
+
+    return out;
+  }
+
+  function buildComparison(data) {
+    const lower = data.lowerPackage;
+    if (!lower) return "";
+
+    const diff = data.recommended.total - lower.total;
+    const parts = [];
+
+    if (lower.extraHours > 0) {
+      parts.push(`${lower.name} richiederebbe ${lower.extraHours} ore extra`);
+    }
+    if (lower.extraKm > 0) {
+      parts.push(`supererebbe di ${lower.extraKm} km la soglia inclusa`);
+    }
+
+    let text = "";
+    if (parts.length) {
+      text += `Con ${lower.name} ${parts.join(" e ")}. `;
+    }
+
+    if (diff > 0 && diff <= 300) {
+      text += `La differenza economica con ${data.recommended.name} è di circa ${data.euro(diff)}, ma in cambio avreste più margine e meno imprevisti.`;
+    } else if (diff <= 0) {
+      text += `${data.recommended.name} risulta anche più conveniente nel totale finale.`;
+    }
+
+    return text.trim();
+  }
+
+  window.generateWeddingExpertAdvice = function generateWeddingExpertAdvice(data) {
+    const paragraphs = [
+      pick(openings),
+      pick(buildObservations(data)),
+      buildComparison(data),
+      pick(humanNotes),
+      pick(endings[data.recommended.id] || endings.signature)
+    ].filter(Boolean);
+
+    return paragraphs.join(" ");
+  };
+})();
+</script>
 <script>
 const STUDIO = "Tattoo Beauty Saloon, Via Torino 1A, 10055 Condove TO";
 const EXTRA_HOUR_PRICE = 150;
