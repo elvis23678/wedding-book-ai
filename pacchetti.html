@@ -734,7 +734,7 @@ function downloadQuotePdf(){
     if(logoImage && logoImage.complete && logoImage.naturalWidth){
       try{
         doc.saveGraphicsState();
-        doc.setGState(new doc.GState({opacity:.035}));
+        doc.setGState(new doc.GState({opacity:.028}));
         doc.addImage(logoImage,"PNG",66,105,78,86,undefined,"FAST");
         doc.restoreGraphicsState();
       }catch(error){}
@@ -744,7 +744,7 @@ function downloadQuotePdf(){
   function header(){
     if(logoImage && logoImage.complete && logoImage.naturalWidth){
       try{
-        doc.addImage(logoImage,"PNG",77,15,56,31,undefined,"FAST");
+        doc.addImage(logoImage,"PNG",75,14,60,33,undefined,"FAST");
       }catch(error){}
     }
 
@@ -786,7 +786,7 @@ function downloadQuotePdf(){
     doc.text("Tattoo Beauty Saloon · Via Torino 1A, Condove (TO) · WhatsApp +39 347 705 0250",105,283.5,{align:"center"});
   }
 
-  function shortAdvice(text,maxChars=430){
+  function shortAdvice(text,maxChars=340){
     const clean=String(text||"").replace(/\s+/g," ").trim();
     if(clean.length<=maxChars) return clean;
 
@@ -803,7 +803,7 @@ function downloadQuotePdf(){
   function addSeal(x,y,rotation=5){
     if(sealImage && sealImage.complete && sealImage.naturalWidth){
       try{
-        doc.addImage(sealImage,"PNG",x-11.5,y-11.5,23,23,undefined,"FAST",rotation);
+        doc.addImage(sealImage,"PNG",x-12,y-12,24,24,undefined,"FAST",rotation);
       }catch(error){}
     }
   }
@@ -866,7 +866,8 @@ function downloadQuotePdf(){
   // Financial summary: fixed position
   const boxY=203;
   doc.setFillColor(244,229,198);
-  doc.setDrawColor(...antiqueGold);
+  doc.setDrawColor(125,82,28);
+  doc.setLineWidth(.5);
   doc.roundedRect(20,boxY,170,34,2,2,"FD");
 
   doc.setTextColor(...antiqueGold);
@@ -893,13 +894,13 @@ function downloadQuotePdf(){
   // Expert advice: fixed safe area
   section("Parere personale del Wedding Expert",246);
   doc.setFont("times","normal");
-  doc.setFontSize(8.2);
+  doc.setFontSize(8.4);
   doc.setTextColor(...ink);
 
-  const body=shortAdvice(q.advice,430);
+  const body=shortAdvice(q.advice,340);
   const advice=`Gentili Sposi, ${body}`;
-  const lines=doc.splitTextToSize(advice,166).slice(0,7);
-  doc.text(lines,22,254);
+  const lines=doc.splitTextToSize(advice,166).slice(0,5);
+  doc.text(lines,22,254,{lineHeightFactor:1.18});
 
   footer(1);
 
@@ -958,7 +959,7 @@ function downloadQuotePdf(){
   doc.text(doc.splitTextToSize(legal,164),22,y);
 
   // One seal only, in a clear empty area.
-  addSeal(105,224,5);
+  addSeal(105,224,4);
 
   // Customer signature lines
   doc.setDrawColor(135,110,75);
@@ -974,18 +975,18 @@ function downloadQuotePdf(){
   // Studio signature: compact and safely above footer
   doc.setTextColor(...muted);
   doc.setFontSize(7.5);
-  doc.text("Per Wedding Tattoo Experience",178,253,{align:"right"});
+  doc.text("Per Wedding Tattoo Experience",178,251,{align:"right"});
 
   if(signatureImage && signatureImage.complete){
     try{
-      doc.addImage(signatureImage,"PNG",124,254,54,15,undefined,"FAST");
+      doc.addImage(signatureImage,"PNG",120,251,58,17,undefined,"FAST");
     }catch(error){}
   }
 
   doc.setTextColor(...ink);
   doc.setFont("times","bold");
   doc.setFontSize(8);
-  doc.text("Elvis Billeci",178,268,{align:"right"});
+  doc.text("Elvis Billeci",178,267,{align:"right"});
 
   footer(2);
 
