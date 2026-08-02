@@ -766,23 +766,21 @@ function downloadQuotePdf(){
     doc.line(28,56,182,56);
   }
 
-  function addSeal(x,y){
+  function addSeal(x,y,rotation=0){
     if(sealImage && sealImage.complete && sealImage.naturalWidth){
       try{
-        doc.saveGraphicsState();
-        doc.setGState(new doc.GState({opacity:.22}));
-        doc.addImage(sealImage,"PNG",x-15+2,y-15+3,33,33,undefined,"FAST",10);
-        doc.restoreGraphicsState();
-
-        doc.addImage(sealImage,"PNG",x-16,y-16,33,33,undefined,"FAST",10);
+        // Sigillo opaco, senza ombra esterna: deve sembrare impresso sulla pergamena.
+        doc.addImage(sealImage,"PNG",x-14.5,y-14.5,29,29,undefined,"FAST",rotation);
         return;
       }catch(error){}
     }
 
+    // Fallback vettoriale senza ombra.
     doc.setFillColor(104,8,20);
-    doc.circle(x,y,12,"F");
+    doc.circle(x,y,11.5,"F");
     doc.setDrawColor(55,0,8);
-    doc.circle(x,y,12,"S");
+    doc.circle(x,y,11.5,"S");
+    doc.circle(x,y,8.8,"S");
     doc.setTextColor(55,0,8);
     doc.setFont("times","bold");
     doc.setFontSize(8);
@@ -855,7 +853,7 @@ function downloadQuotePdf(){
   doc.text("Proposta riservata · Serie WTE",20,y);
 
   documentBox(61);
-  addSeal(176,96);
+  addSeal(174,238,-6);
 
   y+=15;
   doc.setFont("times","normal");
@@ -918,7 +916,7 @@ function downloadQuotePdf(){
   doc.setTextColor(...ink);
 
   const advice=`Gentili Sposi,\n\n${q.advice}\n\nRimango personalmente a disposizione per qualsiasi chiarimento. Sarà un piacere contribuire a rendere unico il vostro matrimonio.`;
-  const adviceLines=doc.splitTextToSize(advice,166);
+  const adviceLines=doc.splitTextToSize(advice,126);
   doc.text(adviceLines,22,y);
 
   footer(1);
@@ -935,7 +933,7 @@ function downloadQuotePdf(){
   doc.text("DICHIARAZIONE DI ACCETTAZIONE",20,y);
   y+=10;
 
-  addSeal(176,92);
+  addSeal(104,226,5);
 
   doc.setFont("times","normal");
   doc.setFontSize(10.2);
