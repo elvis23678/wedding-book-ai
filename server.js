@@ -286,6 +286,15 @@ function needsHumanHandoff(message,reply){
   ].some(term=>source.includes(term));
 }
 
+function geminiReplyText(data){
+  const parts=data?.candidates?.[0]?.content?.parts;
+  if(!Array.isArray(parts)) return "";
+  return parts
+    .map(part=>typeof part?.text==="string"?part.text:"")
+    .join("")
+    .trim();
+}
+
 app.post("/api/chat",tatoLimiter,async(req,res,next)=>{
   try{
     const message=text(req.body?.message,1200);
@@ -297,35 +306,49 @@ app.post("/api/chat",tatoLimiter,async(req,res,next)=>{
       return res.status(400).json({error:"Scrivi una domanda per Tato."});
     }
 
-    if(!process.env.OPENAI_API_KEY){
+    if(!process.env.GEMINI_API_KEY){
       return res.status(503).json({
         error:"Assistente momentaneamente non configurato."
       });
     }
 
-    const response=await fetch("https://api.openai.com/v1/responses",{
+    const configuredModel=text(process.env.TATO_MODEL,80);
+    const model=configuredModel.startsWith("gemini-")
+      ? configuredModel
+      : "gemini-2.5-flash";
+
+    const endpoint=
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+
+    const contents=[
+      ...history.map(item=>({
+        role:item.role==="assistant"?"model":"user",
+        parts:[{text:item.content}]
+      })),
+      {
+        role:"user",
+        parts:[{
+          text:`Pagina catalogo visualizzata: ${pageNumber}. Domanda: ${message}`
+        }]
+      }
+    ];
+
+    const response=await fetch(endpoint,{
       method:"POST",
       headers:{
-        "Authorization":`Bearer ${process.env.OPENAI_API_KEY}`,
+        "x-goog-api-key":process.env.GEMINI_API_KEY,
         "Content-Type":"application/json"
       },
       body:JSON.stringify({
-        model:process.env.TATO_MODEL||"gpt-5-mini",
-        instructions:TATO_INSTRUCTIONS,
-        input:[
-          ...history.map(item=>({
-            role:item.role,
-            content:[{type:"input_text",text:item.content}]
-          })),
-          {
-            role:"user",
-            content:[{
-              type:"input_text",
-              text:`Pagina catalogo visualizzata: ${pageNumber}. Domanda: ${message}`
-            }]
-          }
-        ],
-        max_output_tokens:420
+        systemInstruction:{
+          parts:[{text:TATO_INSTRUCTIONS}]
+        },
+        contents,
+        generationConfig:{
+          maxOutputTokens:420,
+          temperature:0.65,
+          topP:0.9
+        }
       }),
       signal:AbortSignal.timeout(25000)
     });
@@ -333,11 +356,29 @@ app.post("/api/chat",tatoLimiter,async(req,res,next)=>{
     const data=await response.json().catch(()=>({}));
 
     if(!response.ok){
-      console.error("OpenAI API error:",data);
-      return res.status(502).json({error:"Tato è momentaneamente impegnato."});
+      console.error("Gemini API error:",{
+        status:response.status,
+        error:data?.error||data
+      });
+
+      if(response.status===429){
+        return res.status(429).json({
+          error:"Tato ha raggiunto temporaneamente il limite gratuito. Riprova tra poco."
+        });
+      }
+
+      if(response.status===400||response.status===401||response.status===403){
+        return res.status(503).json({
+          error:"La configurazione di Tato deve essere verificata."
+        });
+      }
+
+      return res.status(502).json({
+        error:"Tato è momentaneamente impegnato."
+      });
     }
 
-    const reply=text(data.output_text,3000)||
+    const reply=text(geminiReplyText(data),3000)||
       "Questa domanda merita una risposta precisa: preferisco passarla allo staff.";
 
     const handoff=needsHumanHandoff(message,reply);
@@ -351,6 +392,8 @@ app.post("/api/chat",tatoLimiter,async(req,res,next)=>{
     res.json({
       reply,
       handoff,
+      provider:"gemini",
+      model,
       whatsapp:handoff
         ?"https://wa.me/393477050250?text="+encodeURIComponent(
           `Ciao, ho parlato con Tato e vorrei assistenza sulla mia richiesta: ${message}`
@@ -359,7 +402,9 @@ app.post("/api/chat",tatoLimiter,async(req,res,next)=>{
     });
   }catch(error){
     if(error?.name==="TimeoutError"){
-      return res.status(504).json({error:"Tato ci sta mettendo troppo. Riprova tra poco."});
+      return res.status(504).json({
+        error:"Tato ci sta mettendo troppo. Riprova tra poco."
+      });
     }
     next(error);
   }
