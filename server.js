@@ -285,8 +285,9 @@ app.patch("/api/admin/proposals/:id",adminAuth,async(req,res,next)=>{
     const current=rowToProposal(found.rows[0]);
     const patch=req.body||{};
     const allowedData=[
-      "phone","email","birthDate","weddingDate","location","notes",
-      "whatsappConsent","lastWhatsAppMessage","lastWhatsAppAt"
+      "names","phone","email","birthDate","weddingDate","location","notes",
+      "whatsappConsent","lastWhatsAppMessage","lastWhatsAppAt",
+      "nextFollowUp","depositPaid","contractSigned","lostReason","pdfSent"
     ];
 
     const nextData={...found.rows[0].data};
