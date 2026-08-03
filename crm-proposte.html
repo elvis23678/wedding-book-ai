@@ -147,6 +147,52 @@ textarea{resize:vertical}
   .controls,.form-grid,.summary{grid-template-columns:1fr}.calendar{gap:3px}
   .day{min-height:85px;padding:5px}.day-event{font-size:8px}.sheet{padding:15px 12px}
 }
+
+.manager-hero{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:14px;
+  margin:14px 0;padding:18px;border:1px solid var(--line);border-radius:22px;
+  background:linear-gradient(145deg,rgba(201,154,54,.12),rgba(255,255,255,.015))
+}
+.manager-hero h2{margin:0;font:400 clamp(25px,5vw,38px) Georgia,serif;color:var(--gold2)}
+.manager-hero p{margin:7px 0 0;color:var(--muted)}
+.today-badge{border:1px solid var(--line);border-radius:999px;padding:9px 12px;color:#d7c797;font-size:11px;white-space:nowrap}
+.kpi-secondary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 14px}
+.temperature{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:999px;font-size:9px;font-weight:900;text-transform:uppercase}
+.temp-hot{color:#84e1a3;background:rgba(101,201,139,.11);border:1px solid rgba(101,201,139,.32)}
+.temp-warm{color:#f0c767;background:rgba(231,168,74,.10);border:1px solid rgba(231,168,74,.30)}
+.temp-cold{color:#ff9b91;background:rgba(232,109,98,.10);border:1px solid rgba(232,109,98,.30)}
+.activity-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.task-list{display:grid;gap:9px}
+.task{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;
+  width:100%;padding:12px;border:1px solid rgba(201,154,54,.17);border-radius:14px;background:#11100d;color:inherit
+}
+.task strong{display:block}.task small{display:block;color:var(--muted);margin-top:4px}
+.task-count{min-width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#1c170e;color:var(--gold2);font-weight:900}
+.chart{display:flex;align-items:flex-end;gap:8px;height:180px;padding:14px 5px 4px;border-bottom:1px solid var(--line)}
+.bar-wrap{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px}
+.bar{width:100%;max-width:38px;min-height:3px;border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,var(--gold2),#8c641f)}
+.bar-value{font-size:9px;color:#d5c59c}.bar-label{font-size:9px;color:var(--muted)}
+.agenda{display:grid;gap:12px;margin-top:14px}
+.agenda-day{border:1px solid var(--line);border-radius:19px;background:#0c0b08;overflow:hidden}
+.agenda-date{padding:12px 14px;background:#11100d;color:var(--gold2);font-family:Georgia,serif;font-size:20px}
+.agenda-item{padding:14px;border-top:1px solid rgba(201,154,54,.11)}
+.agenda-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.agenda-item h3{margin:0;color:#fff}
+.agenda-meta{color:var(--muted);font-size:11px;margin-top:6px;line-height:1.5}
+.checklist{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:11px}
+.check{padding:8px;border:1px solid var(--line);border-radius:10px;background:#11100d;font-size:10px;color:#bdb2a1;text-align:center}
+.check.done{color:#8ee0aa;border-color:rgba(101,201,139,.35);background:rgba(101,201,139,.06)}
+.source-badge{font-size:9px;color:#bdb2a1;border:1px solid var(--line);border-radius:999px;padding:5px 8px}
+@media(max-width:850px){
+  .kpi-secondary,.checklist{grid-template-columns:repeat(2,1fr)}
+  .activity-grid{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+  .manager-hero{align-items:flex-start;flex-direction:column}
+  .kpi-secondary{grid-template-columns:1fr 1fr}
+}
+
 </style>
 </head>
 <body>
@@ -167,10 +213,18 @@ textarea{resize:vertical}
     <button class="nav-btn active" data-view="dashboard">Dashboard</button>
     <button class="nav-btn" data-view="pipeline">Pipeline</button>
     <button class="nav-btn" data-view="calendar">Calendario</button>
+    <button class="nav-btn" data-view="agenda">Agenda</button>
     <button class="nav-btn" data-view="archive">Archivio</button>
   </nav>
 
   <section class="view active" id="view-dashboard">
+    <div class="manager-hero">
+      <div>
+        <h2 id="greeting">Buongiorno Elvis</h2>
+        <p id="dailySummary">Caricamento attività di oggi…</p>
+      </div>
+      <div class="today-badge" id="todayLabel"></div>
+    </div>
     <div class="metrics">
       <div class="metric"><strong id="mNew">0</strong><span>Nuove richieste</span></div>
       <div class="metric"><strong id="mOpen">0</strong><span>In lavorazione</span></div>
@@ -179,7 +233,26 @@ textarea{resize:vertical}
       <div class="metric"><strong id="mConfirmedValue">0 €</strong><span>Valore confermato</span></div>
       <div class="metric"><strong id="mRate">0%</strong><span>Conversione</span></div>
     </div>
-    <div class="grid-two">
+
+    <div class="kpi-secondary">
+      <div class="metric"><strong id="mAverage">0 €</strong><span>Valore medio proposta</span></div>
+      <div class="metric"><strong id="mTopPackage">—</strong><span>Pacchetto più richiesto</span></div>
+      <div class="metric"><strong id="mAverageKm">0 km</strong><span>Distanza media</span></div>
+      <div class="metric"><strong id="mPendingDeposits">0 €</strong><span>Acconti da incassare</span></div>
+    </div>
+
+    <div class="activity-grid">
+      <div class="card">
+        <h2>Attività di oggi</h2>
+        <div class="task-list" id="todayTasks"></div>
+      </div>
+      <div class="card">
+        <h2>Richieste ultimi 6 mesi</h2>
+        <div class="chart" id="monthlyChart"></div>
+      </div>
+    </div>
+
+    <div class="grid-two" style="margin-top:12px">
       <div class="card">
         <h2>Priorità commerciali</h2>
         <div class="alert-list" id="priorityList"></div>
@@ -202,6 +275,15 @@ textarea{resize:vertical}
       <button class="btn" id="nextMonth">→</button>
     </div>
     <div class="calendar" id="calendarGrid"></div>
+  </section>
+
+
+  <section class="view" id="view-agenda">
+    <div class="card" style="margin-top:14px">
+      <h2>Agenda operativa matrimoni</h2>
+      <div class="subtitle">Eventi futuri, stato e materiale da preparare.</div>
+    </div>
+    <div class="agenda" id="agendaList"></div>
   </section>
 
   <section class="view" id="view-archive">
@@ -270,6 +352,15 @@ textarea{resize:vertical}
         <div><label>Prossimo contatto</label><input class="control" id="fFollowUp" type="date"></div>
         <div><label>Acconto ricevuto</label><select class="control" id="fDepositPaid"><option value="false">No</option><option value="true">Sì</option></select></div>
         <div><label>Contratto firmato</label><select class="control" id="fContractSigned"><option value="false">No</option><option value="true">Sì</option></select></div>
+        <div><label>Provenienza cliente</label>
+          <select class="control" id="fSource">
+            <option value="">Non indicata</option>
+            <option>Sito</option><option>Instagram</option><option>Matrimonio.com</option>
+            <option>Passaparola</option><option>Studio</option><option>Altro</option>
+          </select>
+        </div>
+        <div><label>Flash pronti</label><select class="control" id="fFlashReady"><option value="false">No</option><option value="true">Sì</option></select></div>
+        <div><label>Kit aftercare pronto</label><select class="control" id="fAftercareReady"><option value="false">No</option><option value="true">Sì</option></select></div>
         <div class="full"><label>Motivo perdita / annullamento</label><input class="control" id="fLostReason"></div>
         <div class="full"><label>Note interne</label><textarea class="control" id="fNotes" rows="6"></textarea></div>
       </div>
@@ -346,33 +437,96 @@ function statusClass(s){
     "Evento concluso":"s-done","Scaduta":"s-lost","Annullata":"s-lost"
   }[s]||"s-draft";
 }
-function renderAll(){renderDashboard();renderPipeline();renderCalendar();renderArchive()}
+function leadTemperature(x){
+  if(["Accettata","Acconto ricevuto","Confermata"].includes(x.status)) return ["Caldo","temp-hot"];
+  const ageDays=Math.floor((Date.now()-new Date(x.updatedAt||x.createdAt).getTime())/86400000);
+  if(["Nuova richiesta","Inviata","In attesa"].includes(x.status)&&ageDays<=7) return ["Tiepido","temp-warm"];
+  return ["Freddo","temp-cold"];
+}
+function daysUntil(value){
+  if(!value)return null;
+  const today=new Date();today.setHours(0,0,0,0);
+  return Math.ceil((new Date(value+"T12:00:00")-today)/86400000);
+}
+function renderAll(){renderDashboard();renderPipeline();renderCalendar();renderAgenda();renderArchive()}
 function renderDashboard(){
   const active=proposals.filter(x=>!["Evento concluso","Scaduta","Annullata"].includes(x.status));
   const confirmed=proposals.filter(x=>["Confermata","Evento concluso"].includes(x.status));
   const decided=proposals.filter(x=>!["Nuova richiesta","Bozza"].includes(x.status));
-  document.getElementById("mNew").textContent=proposals.filter(x=>x.status==="Nuova richiesta").length;
-  document.getElementById("mOpen").textContent=active.length;
-  document.getElementById("mConfirmed").textContent=confirmed.length;
-  document.getElementById("mValue").textContent=euro(proposals.reduce((s,x)=>s+(Number(x.total)||0),0));
-  document.getElementById("mConfirmedValue").textContent=euro(confirmed.reduce((s,x)=>s+(Number(x.total)||0),0));
-  document.getElementById("mRate").textContent=decided.length?Math.round(confirmed.length/decided.length*100)+"%":"0%";
+  const totalValue=proposals.reduce((s,x)=>s+(Number(x.total)||0),0);
 
-  const today=new Date();today.setHours(0,0,0,0);
-  const priorities=proposals.filter(x=>!["Evento concluso","Scaduta","Annullata"].includes(x.status)).sort((a,b)=>{
+  mNew.textContent=proposals.filter(x=>x.status==="Nuova richiesta").length;
+  mOpen.textContent=active.length;
+  mConfirmed.textContent=confirmed.length;
+  mValue.textContent=euro(totalValue);
+  mConfirmedValue.textContent=euro(confirmed.reduce((s,x)=>s+(Number(x.total)||0),0));
+  mRate.textContent=decided.length?Math.round(confirmed.length/decided.length*100)+"%":"0%";
+  mAverage.textContent=euro(proposals.length?totalValue/proposals.length:0);
+
+  const packageCounts={};
+  proposals.forEach(x=>{if(x.packageName)packageCounts[x.packageName]=(packageCounts[x.packageName]||0)+1});
+  mTopPackage.textContent=Object.entries(packageCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]||"—";
+  mAverageKm.textContent=Math.round(proposals.length?proposals.reduce((s,x)=>s+(Number(x.km)||0),0)/proposals.length:0)+" km";
+  const pending=proposals.filter(x=>["Accettata","Acconto ricevuto","Confermata"].includes(x.status)&&!x.depositPaid);
+  mPendingDeposits.textContent=euro(pending.reduce((s,x)=>s+(Number(x.deposit)||0),0));
+
+  const now=new Date(),hour=now.getHours();
+  greeting.textContent=(hour<12?"Buongiorno":hour<18?"Buon pomeriggio":"Buonasera")+" Elvis";
+  todayLabel.textContent=new Intl.DateTimeFormat("it-IT",{weekday:"long",day:"numeric",month:"long"}).format(now);
+
+  const todayIso=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");
+  const dueFollowups=active.filter(x=>x.nextFollowUp&&x.nextFollowUp<=todayIso);
+  const newLeads=proposals.filter(x=>x.status==="Nuova richiesta");
+  const soon=proposals.filter(x=>{const d=daysUntil(x.weddingDate);return d!==null&&d>=0&&d<=30});
+  dailySummary.textContent=`${dueFollowups.length} ricontatti, ${newLeads.length} nuove richieste e ${soon.length} matrimoni nei prossimi 30 giorni.`;
+
+  const tasks=[
+    ["Clienti da richiamare",`${dueFollowups.length} ricontatti scaduti o previsti oggi`,dueFollowups.length,"archive"],
+    ["Nuove richieste",`${newLeads.length} richieste ancora da lavorare`,newLeads.length,"pipeline"],
+    ["Acconti da verificare",`${pending.length} pratiche senza acconto registrato`,pending.length,"archive"],
+    ["Matrimoni entro 30 giorni",`${soon.length} eventi da preparare`,soon.length,"agenda"]
+  ];
+  todayTasks.innerHTML=tasks.map(([title,sub,count,view])=>`
+    <button class="task" data-go="${view}">
+      <div><strong>${title}</strong><small>${sub}</small></div><span class="task-count">${count}</span>
+    </button>`).join("");
+  document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>document.querySelector(`[data-view="${b.dataset.go}"]`).click());
+
+  const months=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    months.push({key,label:new Intl.DateTimeFormat("it-IT",{month:"short"}).format(d),count:0});
+  }
+  proposals.forEach(x=>{
+    const key=String(x.createdAt||"").slice(0,7);
+    const month=months.find(m=>m.key===key);if(month)month.count++;
+  });
+  const max=Math.max(1,...months.map(m=>m.count));
+  monthlyChart.innerHTML=months.map(m=>`
+    <div class="bar-wrap">
+      <span class="bar-value">${m.count}</span>
+      <div class="bar" style="height:${Math.max(3,m.count/max*130)}px"></div>
+      <span class="bar-label">${m.label}</span>
+    </div>`).join("");
+
+  const priorities=active.sort((a,b)=>{
     const af=a.nextFollowUp?new Date(a.nextFollowUp):new Date("2999-01-01");
     const bf=b.nextFollowUp?new Date(b.nextFollowUp):new Date("2999-01-01");
     return af-bf||new Date(a.updatedAt)-new Date(b.updatedAt);
   }).slice(0,7);
-  document.getElementById("priorityList").innerHTML=priorities.length?priorities.map(x=>`
-    <button class="alert" data-open="${esc(x.id)}" style="text-align:left;color:inherit">
-      <strong>${esc(x.names)} · ${esc(x.status)}</strong>
+  priorityList.innerHTML=priorities.length?priorities.map(x=>{
+    const [temp,cls]=leadTemperature(x);
+    return `<button class="alert" data-open="${esc(x.id)}" style="text-align:left;color:inherit">
+      <strong>${esc(x.names)} · ${esc(x.status)} <span class="temperature ${cls}">${temp}</span></strong>
       <small>${x.nextFollowUp?"Ricontatto: "+date(x.nextFollowUp):"Nessun ricontatto programmato"} · ${euro(x.total)}</small>
-    </button>`).join(""):'<div class="empty">Nessuna priorità.</div>';
+    </button>`;
+  }).join(""):'<div class="empty">Nessuna priorità.</div>';
 
+  const today=new Date();today.setHours(0,0,0,0);
   const upcoming=proposals.filter(x=>x.weddingDate&&new Date(x.weddingDate+"T12:00:00")>=today)
     .sort((a,b)=>a.weddingDate.localeCompare(b.weddingDate)).slice(0,7);
-  document.getElementById("upcomingList").innerHTML=upcoming.length?upcoming.map(x=>`
+  upcomingList.innerHTML=upcoming.length?upcoming.map(x=>`
     <button class="event" data-open="${esc(x.id)}" style="text-align:left;color:inherit">
       <strong>${date(x.weddingDate)} · ${esc(x.names)}</strong>
       <small>${esc(x.location||"Location da definire")} · ${esc(x.packageName||"")}</small>
@@ -386,8 +540,8 @@ function renderPipeline(){
       <div class="column-head"><strong>${title}</strong><span class="count">${items.length}</span></div>
       ${items.map(x=>`
         <article class="lead-card">
-          <h3>${esc(x.names)}</h3>
-          <p>${date(x.weddingDate)} · ${esc(x.packageName||"")}</p>
+          <h3>${esc(x.names)} <span class="temperature ${leadTemperature(x)[1]}">${leadTemperature(x)[0]}</span></h3>
+          <p>${date(x.weddingDate)} · ${esc(x.packageName||"")} ${x.source?`· <span class="source-badge">${esc(x.source)}</span>`:""}</p>
           <div class="money">${euro(x.total)}</div>
           <div class="lead-actions">
             ${i>0?`<button data-move="${esc(x.id)}" data-status="${esc(PIPELINE[i-1][1])}">←</button>`:""}
@@ -423,6 +577,37 @@ function renderCalendar(){
   document.getElementById("calendarGrid").innerHTML=cells.join("");
   bindOpen();
 }
+
+function renderAgenda(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const future=proposals.filter(x=>x.weddingDate&&new Date(x.weddingDate+"T12:00:00")>=today)
+    .sort((a,b)=>a.weddingDate.localeCompare(b.weddingDate));
+  const grouped={};
+  future.forEach(x=>(grouped[x.weddingDate]??=[]).push(x));
+  agendaList.innerHTML=future.length?Object.entries(grouped).map(([day,items])=>`
+    <section class="agenda-day">
+      <div class="agenda-date">${date(day)} · ${daysUntil(day)===0?"Oggi":"tra "+daysUntil(day)+" giorni"}</div>
+      ${items.map(x=>`
+        <article class="agenda-item">
+          <div class="agenda-top">
+            <div>
+              <h3>${esc(x.names)}</h3>
+              <div class="agenda-meta">${esc(x.location||"Location da definire")} · ${esc(x.packageName||"")} · ${euro(x.total)}<br>
+              Stato: ${esc(x.status)} ${x.startTime?"· Ore "+esc(x.startTime):""}</div>
+            </div>
+            <button class="icon-btn" data-open="${esc(x.id)}">Apri</button>
+          </div>
+          <div class="checklist">
+            <div class="check ${x.depositPaid?"done":""}">Acconto ${x.depositPaid?"✓":"○"}</div>
+            <div class="check ${x.contractSigned?"done":""}">Contratto ${x.contractSigned?"✓":"○"}</div>
+            <div class="check ${x.flashReady?"done":""}">Flash ${x.flashReady?"✓":"○"}</div>
+            <div class="check ${x.aftercareReady?"done":""}">Aftercare ${x.aftercareReady?"✓":"○"}</div>
+          </div>
+        </article>`).join("")}
+    </section>`).join(""):'<div class="empty">Nessun evento futuro.</div>';
+  bindOpen();
+}
+
 function renderArchive(){
   const q=document.getElementById("search").value.trim().toLowerCase();
   const sf=document.getElementById("statusFilter").value,pf=document.getElementById("packageFilter").value;
@@ -466,7 +651,9 @@ function openProposal(id){
   fNames.value=x.names||"";fBirth.value=x.birthDate||"";fPhone.value=x.phone||"";fEmail.value=x.email||"";
   fWedding.value=x.weddingDate||"";fLocation.value=x.location||"";fStatus.value=x.status||"Nuova richiesta";
   fFollowUp.value=x.nextFollowUp||"";fDepositPaid.value=String(Boolean(x.depositPaid));
-  fContractSigned.value=String(Boolean(x.contractSigned));fLostReason.value=x.lostReason||"";fNotes.value=x.notes||"";
+  fContractSigned.value=String(Boolean(x.contractSigned));fSource.value=x.source||"";
+  fFlashReady.value=String(Boolean(x.flashReady));fAftercareReady.value=String(Boolean(x.aftercareReady));
+  fLostReason.value=x.lostReason||"";fNotes.value=x.notes||"";
   message.value=whatsappText(x);
   renderTimeline(x);renderDocuments(x);
   modal.classList.add("show");
@@ -488,7 +675,10 @@ async function saveCustomerData(){
   const x=selected();await patch(x.id,{names:fNames.value.trim(),birthDate:fBirth.value,phone:fPhone.value.trim(),email:fEmail.value.trim(),weddingDate:fWedding.value,location:fLocation.value.trim(),historyText:"Dati cliente aggiornati."});openProposal(x.id)
 }
 async function saveCommercialData(){
-  const x=selected();await patch(x.id,{status:fStatus.value,nextFollowUp:fFollowUp.value,depositPaid:fDepositPaid.value==="true",contractSigned:fContractSigned.value==="true",lostReason:fLostReason.value.trim(),notes:fNotes.value.trim(),historyText:"Gestione commerciale aggiornata."});openProposal(x.id)
+  const x=selected();await patch(x.id,{status:fStatus.value,nextFollowUp:fFollowUp.value,depositPaid:fDepositPaid.value==="true",
+  contractSigned:fContractSigned.value==="true",source:fSource.value,
+  flashReady:fFlashReady.value==="true",aftercareReady:fAftercareReady.value==="true",
+  lostReason:fLostReason.value.trim(),notes:fNotes.value.trim(),historyText:"Gestione commerciale aggiornata."});openProposal(x.id)
 }
 async function addEvent(text){const x=selected();await patch(x.id,{historyText:text+"."});openProposal(x.id)}
 async function openWa(){
