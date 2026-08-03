@@ -277,8 +277,31 @@ ${TATO_KNOWLEDGE}
 
 function cleanChatHistory(history){
   if(!Array.isArray(history)) return [];
-  return history.slice(-10).map(item=>({
-    role:itfunction geminiReplyText(data){
+  return history
+    .slice(-10)
+    .map(item=>({
+      role:item?.role==="assistant"?"assistant":"user",
+      content:String(item?.content||"").slice(0,1200)
+    }))
+    .filter(item=>item.content.trim());
+}
+
+function needsHumanHandoff(message,reply){
+  const source=`${message} ${reply}`.toLowerCase();
+  return [
+    "disponibilità",
+    "bloccare la data",
+    "confermare la data",
+    "parlare con elvis",
+    "contratto",
+    "sconto",
+    "prezzo definitivo",
+    "preventivo definitivo",
+    "reclamo"
+  ].some(term=>source.includes(term));
+}
+
+function geminiReplyText(data){
   const parts=data?.candidates?.[0]?.content?.parts;
   if(!Array.isArray(parts)) return "";
   return parts
@@ -412,23 +435,6 @@ app.post("/api/chat",tatoLimiter,async(req,res,next)=>{
       return res.status(504).json({
         error:"Tato ci sta mettendo troppo. Riprova tra poco."
       });
-    }
-    next(error);
-  }
-});mber,handoff]);
-
-    res.json({
-      reply,
-      handoff,
-      whatsapp:handoff
-        ?"https://wa.me/393477050250?text="+encodeURIComponent(
-          `Ciao, ho parlato con Tato e vorrei assistenza sulla mia richiesta: ${message}`
-        )
-        :null
-    });
-  }catch(error){
-    if(error?.name==="TimeoutError"){
-      return res.status(504).json({error:"Tato ci sta mettendo troppo. Riprova tra poco."});
     }
     next(error);
   }
