@@ -62,10 +62,20 @@ transition:opacity .25s ease,visibility .25s ease,transform .25s ease;
     .availability-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 14px;border-bottom:1px solid rgba(201,154,54,.18)}
     .availability-head strong{font-family:Georgia,serif;color:var(--gold2);font-size:20px;font-weight:400}
     .availability-close{width:38px;height:38px;border-radius:50%;border:1px solid rgba(201,154,54,.28);background:transparent;color:var(--gold2);font-size:22px;cursor:pointer}
+#availabilityForm{
+display:flex;
+flex-direction:column;
+flex:1;
+min-height:0;
+overflow:hidden;
+}
     .availability-body{
 flex:1;
+min-height:0;
 overflow-y:auto;
+overscroll-behavior:contain;
 -webkit-overflow-scrolling:touch;
+touch-action:pan-y;
 padding:16px 16px 100px;
 }
     .availability-intro{margin:0 0 14px;color:#cfc5b3;font-size:13px;line-height:1.5}
@@ -76,7 +86,7 @@ padding:16px 16px 100px;
     .field input,.field select,.field textarea{width:100%;border:1px solid rgba(201,154,54,.24);border-radius:12px;background:#0d0d0c;color:#f3eee4;padding:12px 13px;outline:none;font:inherit;font-size:14px}
     .field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(240,207,117,.72)}
     .field textarea{min-height:88px;resize:vertical}
-    .availability-actions{display:flex;gap:9px;padding:14px 16px 17px;border-top:1px solid rgba(201,154,54,.18)}
+    .availability-actions{flex:0 0 auto;display:flex;gap:9px;padding:14px 16px calc(17px + var(--safe-bottom));border-top:1px solid rgba(201,154,54,.18);background:rgba(3,3,3,.98)}
     .availability-cancel,.availability-submit{flex:1;min-height:46px;border-radius:999px;cursor:pointer;font-weight:600}
     .availability-cancel{border:1px solid rgba(201,154,54,.28);background:transparent;color:#d8cfbf}
     .availability-submit{border:1px solid var(--gold);background:linear-gradient(135deg,#e6c56c,#c99a36);color:#111}
