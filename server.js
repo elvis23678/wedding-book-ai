@@ -255,10 +255,11 @@ PERSONALITÀ
 
 REGOLE IMPORTANTI
 - Usa soltanto le informazioni fornite nel contesto del servizio.
-- Non interrompere mai una frase.
-- Completa sempre ogni risposta.
-- Per domande su pacchetti, funzionamento, sicurezza, aftercare e prezzi fornisci risposte complete e professionali.
-- Concludi sempre con una domanda utile per accompagnare il cliente nel passo successivo.
+- Completa sempre ogni risposta e non interrompere mai una frase.
+- Rispondi in modo esauriente ma leggibile.
+- Per domande su pacchetti, funzionamento, sicurezza, aftercare, prezzi, tempi, tatuaggi realizzabili e zone escluse, fornisci tutti i dettagli disponibili.
+- Non allungare artificialmente una risposta semplice, ma non lasciare mai concetti incompleti.
+- Concludi con una domanda utile solo quando aiuta davvero il cliente a proseguire.
 - Non inventare prezzi, disponibilità, regole, condizioni o promesse.
 - Non confermare date e non concludere contratti.
 - Per preventivi definitivi, disponibilità, modifiche o decisioni di Elvis, passa allo staff.
@@ -277,17 +278,13 @@ ${TATO_KNOWLEDGE}
 function cleanChatHistory(history){
   if(!Array.isArray(history)) return [];
   return history.slice(-10).map(item=>({
-    role:item?.role==="assistant"?"assistant":"user",
-    content:String(item?.content||"").slice(0,1200)
-  })).filter(item=>item.content.trim());
-}
-
-function needsHumanHandoff(message,reply){
-  const source=`${message} ${reply}`.toLowerCase();
-  return [
-    "disponibilità","bloccare la data","confermare la data","parlare con elvis",
-    "contratto","sconto","prezzo definitivo","preventivo definitivo","reclamo"
-  ].some(term=>source.includes(term));
+    role:itfunction geminiReplyText(data){
+  const parts=data?.candidates?.[0]?.content?.parts;
+  if(!Array.isArray(parts)) return "";
+  return parts
+    .map(part=>typeof part?.text==="string"?part.text:"")
+    .join("")
+    .trim();
 }
 
 app.post("/api/chat",tatoLimiter,async(req,res,next)=>{
@@ -301,48 +298,95 @@ app.post("/api/chat",tatoLimiter,async(req,res,next)=>{
       return res.status(400).json({error:"Scrivi una domanda per Tato."});
     }
 
-    if(!process.env.OPENAI_API_KEY){
+    if(!process.env.GEMINI_API_KEY){
       return res.status(503).json({
         error:"Assistente momentaneamente non configurato."
       });
     }
 
-    const response=await fetch("https://api.openai.com/v1/responses",{
+    const configuredModel=text(process.env.TATO_MODEL,80);
+    const model=configuredModel.startsWith("gemini-")
+      ? configuredModel
+      : "gemini-flash-latest";
+
+    const endpoint=
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+
+    const contents=[
+      ...history.map(item=>({
+        role:item.role==="assistant"?"model":"user",
+        parts:[{text:item.content}]
+      })),
+      {
+        role:"user",
+        parts:[{
+          text:`Pagina catalogo visualizzata: ${pageNumber}. Domanda: ${message}`
+        }]
+      }
+    ];
+
+    const response=await fetch(endpoint,{
       method:"POST",
       headers:{
-        "Authorization":`Bearer ${process.env.OPENAI_API_KEY}`,
+        "x-goog-api-key":process.env.GEMINI_API_KEY,
         "Content-Type":"application/json"
       },
       body:JSON.stringify({
-        model:process.env.TATO_MODEL||"gpt-5-mini",
-        instructions:TATO_INSTRUCTIONS,
-        input:[
-          ...history.map(item=>({
-            role:item.role,
-            content:[{type:"input_text",text:item.content}]
-          })),
-          {
-            role:"user",
-            content:[{
-              type:"input_text",
-              text:`Pagina catalogo visualizzata: ${pageNumber}. Domanda: ${message}`
-            }]
-          }
-        ],
-        max_output_tokens:420
+        systemInstruction:{
+          parts:[{text:TATO_INSTRUCTIONS}]
+        },
+        contents,
+        generationConfig:{
+          maxOutputTokens:1400,
+          temperature:0.55,
+          topP:0.9,
+          topK:40
+        }
       }),
-      signal:AbortSignal.timeout(25000)
+      signal:AbortSignal.timeout(30000)
     });
 
     const data=await response.json().catch(()=>({}));
 
     if(!response.ok){
-      console.error("OpenAI API error:",data);
-      return res.status(502).json({error:"Tato è momentaneamente impegnato."});
+      console.error("Gemini API error:",{
+        status:response.status,
+        error:data?.error||data
+      });
+
+      if(response.status===429){
+        return res.status(429).json({
+          error:"Tato ha raggiunto temporaneamente il limite gratuito. Riprova tra poco."
+        });
+      }
+
+      if(response.status===400||response.status===401||response.status===403){
+        return res.status(503).json({
+          error:"La configurazione Gemini di Tato deve essere verificata."
+        });
+      }
+
+      if(response.status===404){
+        return res.status(503).json({
+          error:"Il modello Gemini configurato non è disponibile."
+        });
+      }
+
+      return res.status(502).json({
+        error:"Tato è momentaneamente impegnato."
+      });
     }
 
-    const reply=text(data.output_text,3000)||
-      "Questa domanda merita una risposta precisa: preferisco passarla allo staff.";
+    const finishReason=data?.candidates?.[0]?.finishReason;
+    if(finishReason==="MAX_TOKENS"){
+      console.warn("Tato: risposta troncata per limite token.");
+    }
+
+    let reply=text(geminiReplyText(data),5000);
+
+    if(!reply){
+      reply="Questa domanda merita una risposta precisa: preferisco passarla allo staff.";
+    }
 
     const handoff=needsHumanHandoff(message,reply);
 
@@ -351,6 +395,27 @@ app.post("/api/chat",tatoLimiter,async(req,res,next)=>{
         session_id,user_message,assistant_reply,page_number,needs_human
       ) VALUES($1,$2,$3,$4,$5)
     `,[sessionId,message,reply,pageNumber,handoff]);
+
+    res.json({
+      reply,
+      handoff,
+      provider:"gemini",
+      model,
+      whatsapp:handoff
+        ?"https://wa.me/393477050250?text="+encodeURIComponent(
+          `Ciao, ho parlato con Tato e vorrei assistenza sulla mia richiesta: ${message}`
+        )
+        :null
+    });
+  }catch(error){
+    if(error?.name==="TimeoutError"){
+      return res.status(504).json({
+        error:"Tato ci sta mettendo troppo. Riprova tra poco."
+      });
+    }
+    next(error);
+  }
+});mber,handoff]);
 
     res.json({
       reply,
