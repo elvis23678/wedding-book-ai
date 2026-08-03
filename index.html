@@ -70,7 +70,8 @@
     .contact-head strong{font-family:Georgia,serif;color:var(--gold2);font-size:clamp(25px,4vw,36px);font-weight:400;white-space:nowrap}
     .contact-close{width:44px;height:44px;border-radius:50%;border:1px solid rgba(201,154,54,.28);background:rgba(255,255,255,.02);color:#e4d6b9;font-size:30px;line-height:1;cursor:pointer}
 
-    .tato-hero{display:grid;grid-template-columns:minmax(210px,38%) 1fr;gap:28px;padding:6px 24px 22px;align-items:center}
+    .tato-hero{display:grid;grid-template-columns:minmax(210px,38%) 1fr;gap:28px;padding:6px 24px 14px;align-items:center}
+    .tato-chat-row{padding:0 24px 22px}
     .tato-portrait{position:relative;align-self:stretch;min-height:355px;border-radius:22px;overflow:hidden;border:1px solid rgba(201,154,54,.24);background:#080704}
     .tato-portrait img{width:100%;height:100%;object-fit:cover;object-position:center 28%;display:block;filter:drop-shadow(0 0 22px rgba(201,154,54,.12))}
     .tato-portrait:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.42))}
@@ -79,14 +80,15 @@
     .tato-copy p{margin:0 0 14px;color:#e9e1d2;font-size:16px;line-height:1.62}
     .tato-copy p:last-of-type{color:#c9bda7}
     .tato-chat-cta{
-      width:100%;min-height:76px;border:0;border-radius:18px;margin-top:18px;padding:14px 18px;
-      display:flex;align-items:center;gap:15px;text-align:left;cursor:pointer;
-      background:linear-gradient(135deg,#f0cf75,#c99536);color:#111;
-      box-shadow:0 14px 32px rgba(201,154,54,.18)
+      width:100%;min-height:88px;border:1px solid rgba(240,207,117,.78);border-radius:18px;margin:0;padding:12px 18px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;cursor:pointer;
+      background:linear-gradient(135deg,#f0cf75 0%,#d8ac4d 48%,#c99536 100%);color:#111;
+      box-shadow:0 14px 32px rgba(201,154,54,.18),inset 0 1px 0 rgba(255,255,255,.35)
     }
-    .tato-chat-cta svg{width:30px;height:30px;fill:none;stroke:#111;stroke-width:1.9;flex:0 0 auto}
-    .tato-chat-cta span{min-width:0;overflow:hidden}.tato-chat-cta strong{display:block;font-size:18px;line-height:1.1;overflow:hidden;text-overflow:ellipsis}
-    .tato-chat-cta small{display:block;margin-top:5px;font-size:14px;color:#33250d}
+    .tato-chat-cta svg{width:28px;height:28px;fill:none;stroke:#111;stroke-width:1.9;flex:0 0 auto}
+    .tato-chat-cta span{width:100%;min-width:0;overflow:visible;text-align:center}
+    .tato-chat-cta strong{display:block;font-size:18px;line-height:1.15;white-space:normal;text-align:center}
+    .tato-chat-cta small{display:block;margin-top:4px;font-size:13px;line-height:1.2;color:#33250d;white-space:normal;text-align:center}
 
     .contact-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 24px 18px}
     .contact-action{
@@ -117,14 +119,16 @@
       .contact-card{max-height:calc(100dvh - 16px);border-radius:24px}
       .contact-head{padding:18px 18px 10px}
       .contact-head strong{font-size:25px;white-space:nowrap}
-      .tato-hero{grid-template-columns:122px minmax(0,1fr);gap:18px;padding:4px 18px 22px;align-items:start}
+      .tato-hero{grid-template-columns:122px minmax(0,1fr);gap:18px;padding:4px 18px 14px;align-items:start}
+      .tato-chat-row{padding:0 18px 14px}
       .tato-portrait{min-height:286px;border-radius:17px}
       .tato-copy h2{font-size:24px;line-height:1.06;margin-top:3px}
       .tato-role{font-size:9px;line-height:1.35;margin-bottom:10px}
       .tato-copy p{font-size:12.5px;line-height:1.48;margin-bottom:8px}
       .tato-copy p.secondary{display:none}
-      .tato-chat-cta{width:100%;min-width:0;min-height:64px;margin-top:12px;padding:11px 12px;gap:10px;overflow:hidden}
-      .tato-chat-cta strong{font-size:12px;white-space:nowrap}.tato-chat-cta small{font-size:10.5px;white-space:nowrap}
+      .tato-chat-cta{width:100%;min-width:0;min-height:76px;margin:0;padding:10px 12px;gap:3px;overflow:visible}
+      .tato-chat-cta svg{width:25px;height:25px}
+      .tato-chat-cta strong{font-size:15px;white-space:normal}.tato-chat-cta small{font-size:11.5px;white-space:normal}
       .contact-actions{grid-template-columns:1fr 1fr;padding:0 18px 14px;gap:9px}
       .contact-action{min-height:84px}
       .contact-action.availability{min-height:76px;padding:15px 16px}
@@ -238,11 +242,14 @@ padding:16px 16px 100px;
           <div class="tato-role">Il tuo Wedding Tattoo Concierge</div>
           <p>Ti aiuto a capire come funziona il servizio, scegliere il pacchetto ideale e verificare la disponibilità della tua data.</p>
           <p class="secondary">Quando serve un preventivo personalizzato o una conferma definitiva, passo la conversazione direttamente a Elvis e al nostro team.</p>
-          <button class="tato-chat-cta" id="openChat" type="button">
-            <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="M8 9h8M8 13h5"/></svg>
-            <span><strong>PARLA CON TATO</strong><small>Risponde subito, 24/7</small></span>
-          </button>
         </div>
+      </div>
+
+      <div class="tato-chat-row">
+        <button class="tato-chat-cta" id="openChat" type="button">
+          <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="M8 9h8M8 13h5"/></svg>
+          <span><strong>PARLA CON TATO</strong><small>Risposte immediate 24/7</small></span>
+        </button>
       </div>
 
       <div class="contact-actions">
