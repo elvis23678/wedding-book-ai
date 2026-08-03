@@ -33,10 +33,106 @@
   
     /* Contatti e assistente AI */
     .contact-fab{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:calc(78px + var(--safe-bottom));z-index:24;width:54px;height:54px;border-radius:50%;border:1px solid rgba(240,207,117,.62);background:linear-gradient(145deg,rgba(28,22,11,.96),rgba(5,5,5,.96));color:var(--gold2);display:grid;place-items:center;box-shadow:0 14px 38px rgba(0,0,0,.58),0 0 28px rgba(201,154,54,.10);cursor:pointer;transition:.22s ease}.contact-fab:hover{transform:translateY(-2px);border-color:#ffe9a6}.contact-fab svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8}.contact-fab .dot{position:absolute;right:2px;top:2px;width:10px;height:10px;border-radius:50%;background:#48c878;border:2px solid #090909}
-    .contact-panel{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:calc(142px + var(--safe-bottom));z-index:25;width:min(330px,calc(100vw - 28px));padding:12px;border:1px solid rgba(201,154,54,.34);border-radius:22px;background:rgba(7,7,7,.94);backdrop-filter:blur(20px);box-shadow:0 24px 70px rgba(0,0,0,.72);opacity:0;visibility:hidden;transform:translateY(10px) scale(.98);transition:.22s ease}.contact-panel.open{opacity:1;visibility:visible;transform:none}.contact-head{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 10px}.contact-head strong{font-family:Georgia,serif;color:var(--gold2);font-size:18px;font-weight:400}.contact-close{border:0;background:transparent;color:#bcae91;font-size:22px;cursor:pointer}.contact-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.contact-action{min-height:48px;border:1px solid rgba(201,154,54,.25);border-radius:14px;background:rgba(255,255,255,.025);color:#eee8dc;text-decoration:none;display:flex;align-items:center;gap:9px;padding:10px 11px;font-size:13px;transition:.18s}.contact-action:hover{border-color:rgba(240,207,117,.65);background:rgba(201,154,54,.08)}.contact-action svg{width:19px;height:19px;fill:none;stroke:var(--gold2);stroke-width:1.8}.contact-action.primary{grid-column:1/-1;background:linear-gradient(135deg,rgba(201,154,54,.20),rgba(201,154,54,.06));border-color:rgba(240,207,117,.50)}
+
+    .contact-fab{
+      position:absolute;right:max(16px,env(safe-area-inset-right));
+      bottom:calc(70px + var(--safe-bottom));z-index:26;
+      width:62px;height:62px;border-radius:50%;
+      border:1px solid rgba(240,207,117,.86);
+      background:#080704;box-shadow:0 12px 38px rgba(0,0,0,.68),0 0 0 1px rgba(201,154,54,.12);
+      display:grid;place-items:center;cursor:pointer;overflow:visible;
+      transition:transform .2s ease,box-shadow .2s ease
+    }
+    .contact-fab:hover{transform:translateY(-2px);box-shadow:0 18px 42px rgba(0,0,0,.78)}
+    .contact-fab img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+    .contact-fab .dot{position:absolute;right:0;top:2px;width:12px;height:12px;border-radius:50%;background:#35b66b;border:2px solid #090806}
+    .tato-label{display:none}
+
+    .contact-panel{
+      position:fixed;inset:0;z-index:60;
+      display:flex;align-items:center;justify-content:center;
+      padding:max(16px,var(--safe-top)) 14px max(16px,var(--safe-bottom));
+      background:rgba(0,0,0,.76);backdrop-filter:blur(12px);
+      opacity:0;visibility:hidden;pointer-events:none;
+      transition:opacity .24s ease,visibility .24s ease
+    }
+    .contact-panel.open{opacity:1;visibility:visible;pointer-events:auto}
+    .contact-card{
+      width:min(760px,100%);max-height:calc(100dvh - 28px);overflow-y:auto;
+      border:1px solid rgba(201,154,54,.48);border-radius:28px;
+      background:
+        radial-gradient(circle at 70% 8%,rgba(201,154,54,.11),transparent 34%),
+        linear-gradient(145deg,#0c0a06 0%,#050504 58%,#090806 100%);
+      box-shadow:0 38px 110px rgba(0,0,0,.88);
+      scrollbar-width:thin;scrollbar-color:rgba(201,154,54,.42) transparent
+    }
+    .contact-head{display:flex;align-items:center;justify-content:space-between;padding:22px 24px 14px}
+    .contact-head strong{font-family:Georgia,serif;color:var(--gold2);font-size:clamp(28px,5vw,42px);font-weight:400}
+    .contact-close{width:44px;height:44px;border-radius:50%;border:1px solid rgba(201,154,54,.28);background:rgba(255,255,255,.02);color:#e4d6b9;font-size:30px;line-height:1;cursor:pointer}
+
+    .tato-hero{display:grid;grid-template-columns:minmax(210px,38%) 1fr;gap:28px;padding:6px 24px 22px;align-items:center}
+    .tato-portrait{position:relative;align-self:stretch;min-height:355px;border-radius:22px;overflow:hidden;border:1px solid rgba(201,154,54,.24);background:#080704}
+    .tato-portrait img{width:100%;height:100%;object-fit:cover;object-position:center 26%;display:block}
+    .tato-portrait:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.42))}
+    .tato-copy h2{font-family:Georgia,serif;font-size:clamp(31px,5vw,52px);font-weight:400;font-style:italic;color:var(--gold2);margin:0 0 8px}
+    .tato-role{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:#d9bf82;margin-bottom:18px}
+    .tato-copy p{margin:0 0 14px;color:#e9e1d2;font-size:16px;line-height:1.62}
+    .tato-copy p:last-of-type{color:#c9bda7}
+    .tato-chat-cta{
+      width:100%;min-height:76px;border:0;border-radius:18px;margin-top:18px;padding:14px 18px;
+      display:flex;align-items:center;gap:15px;text-align:left;cursor:pointer;
+      background:linear-gradient(135deg,#f0cf75,#c99536);color:#111;
+      box-shadow:0 14px 32px rgba(201,154,54,.18)
+    }
+    .tato-chat-cta svg{width:30px;height:30px;fill:none;stroke:#111;stroke-width:1.9;flex:0 0 auto}
+    .tato-chat-cta strong{display:block;font-size:18px;line-height:1.1}
+    .tato-chat-cta small{display:block;margin-top:5px;font-size:14px;color:#33250d}
+
+    .contact-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 24px 18px}
+    .contact-action{
+      min-height:112px;border:1px solid rgba(201,154,54,.28);border-radius:18px;
+      background:rgba(255,255,255,.018);color:#eee8dc;text-decoration:none;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;
+      padding:14px 10px;font-size:14px;text-align:center;transition:.18s
+    }
+    .contact-action:hover{border-color:rgba(240,207,117,.7);background:rgba(201,154,54,.08);transform:translateY(-1px)}
+    .contact-action svg{width:28px;height:28px;fill:none;stroke:var(--gold2);stroke-width:1.8}
+    .contact-action strong{font-size:15px}.contact-action small{font-size:12px;color:#bdb3a1}
+    .contact-action.availability{
+      grid-column:1/-1;min-height:88px;flex-direction:row;justify-content:flex-start;text-align:left;
+      padding:18px 22px;background:linear-gradient(135deg,rgba(201,154,54,.12),rgba(255,255,255,.015))
+    }
+    .contact-action.availability svg{width:32px;height:32px;margin-right:8px}
+    .contact-action.availability strong{font-family:Georgia,serif;color:var(--gold2);font-size:22px;font-weight:400}
+    .contact-footer{padding:2px 24px 22px;text-align:center;color:#cfae61;font-family:Georgia,serif;letter-spacing:.17em;text-transform:uppercase;font-size:12px}
+
+    .chat-avatar{overflow:hidden}
+    .chat-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+
     .chat-backdrop{position:absolute;inset:0;z-index:40;background:rgba(0,0,0,.58);backdrop-filter:blur(7px);opacity:0;visibility:hidden;transition:.25s}.chat-backdrop.open{opacity:1;visibility:visible}.chat-window{position:absolute;right:max(10px,env(safe-area-inset-right));bottom:max(10px,var(--safe-bottom));z-index:41;width:min(410px,calc(100vw - 20px));height:min(690px,calc(100dvh - 20px));display:flex;flex-direction:column;border:1px solid rgba(201,154,54,.38);border-radius:24px;overflow:hidden;background:linear-gradient(180deg,rgba(14,12,8,.99),rgba(3,3,3,.99));box-shadow:0 30px 100px rgba(0,0,0,.86);opacity:0;visibility:hidden;transform:translateY(18px) scale(.985);transition:.27s ease}.chat-window.open{opacity:1;visibility:visible;transform:none}.chat-header{padding:15px 16px 13px;border-bottom:1px solid rgba(201,154,54,.18);display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.28)}.chat-title{display:flex;align-items:center;gap:11px}.chat-avatar{width:38px;height:38px;border:1px solid var(--gold);transform:rotate(45deg);display:grid;place-items:center;color:var(--gold2)}.chat-avatar span{transform:rotate(-45deg);font-family:Georgia,serif}.chat-title strong{display:block;font-family:Georgia,serif;color:var(--gold2);font-weight:400;font-size:17px}.chat-title small{display:block;color:#9f998d;margin-top:2px}.chat-x{width:38px;height:38px;border-radius:50%;border:1px solid rgba(201,154,54,.26);background:transparent;color:var(--gold2);font-size:22px;cursor:pointer}.chat-messages{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:11px;scroll-behavior:smooth}.msg{max-width:86%;padding:11px 13px;border-radius:16px;line-height:1.45;font-size:14px;white-space:pre-wrap}.msg.bot{align-self:flex-start;color:#eee7d8;background:#11100d;border:1px solid rgba(201,154,54,.18);border-bottom-left-radius:5px}.msg.user{align-self:flex-end;color:#111;background:linear-gradient(135deg,#e8c66c,#c99a36);border-bottom-right-radius:5px}.msg.typing{color:#b9b09e;font-style:italic}.quick-replies{display:flex;gap:7px;overflow-x:auto;padding:0 15px 11px;scrollbar-width:none}.quick-replies::-webkit-scrollbar{display:none}.quick{flex:0 0 auto;border:1px solid rgba(201,154,54,.34);border-radius:999px;background:rgba(201,154,54,.06);color:#e6d7b5;padding:8px 11px;font-size:12px;cursor:pointer}.chat-form{display:flex;gap:8px;padding:12px;border-top:1px solid rgba(201,154,54,.18);background:rgba(0,0,0,.42)}.chat-input{flex:1;min-width:0;border:1px solid rgba(201,154,54,.25);border-radius:999px;background:#0d0d0c;color:#f3eee4;padding:12px 15px;outline:none}.chat-input:focus{border-color:rgba(240,207,117,.70)}.chat-send{width:44px;height:44px;border-radius:50%;border:1px solid var(--gold);background:var(--gold);color:#111;display:grid;place-items:center;cursor:pointer}.chat-send:disabled{opacity:.45;cursor:wait}.chat-send svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2}.chat-foot{padding:0 15px 12px;color:#827d74;font-size:10px;text-align:center}.handoff{display:flex;gap:7px;margin-top:8px}.handoff a{color:#f2d885;text-decoration:none;border-bottom:1px solid rgba(242,216,133,.45)}
     .tato-label{position:absolute;right:60px;white-space:nowrap;padding:7px 10px;border-radius:999px;background:rgba(7,7,7,.92);border:1px solid rgba(201,154,54,.30);color:#ead9b1;font-size:11px;box-shadow:0 8px 25px rgba(0,0,0,.38)}
-    @media(max-width:700px){.tato-label{right:56px}.contact-fab{width:50px;height:50px;bottom:calc(70px + var(--safe-bottom))}.contact-panel{bottom:calc(128px + var(--safe-bottom))}.chat-window{right:0;bottom:0;width:100%;height:100dvh;max-height:none;border-radius:0;border-left:0;border-right:0;border-bottom:0}.chat-backdrop{display:none}}
+    @media(max-width:700px){
+      .contact-fab{width:54px;height:54px;bottom:calc(70px + var(--safe-bottom))}
+      .contact-panel{padding:max(8px,var(--safe-top)) 8px max(8px,var(--safe-bottom))}
+      .contact-card{max-height:calc(100dvh - 16px);border-radius:24px}
+      .contact-head{padding:18px 18px 10px}
+      .contact-head strong{font-size:30px}
+      .tato-hero{grid-template-columns:112px 1fr;gap:14px;padding:4px 18px 18px;align-items:start}
+      .tato-portrait{min-height:210px;border-radius:17px}
+      .tato-copy h2{font-size:30px;margin-top:3px}
+      .tato-role{font-size:10px;margin-bottom:9px}
+      .tato-copy p{font-size:13px;line-height:1.48;margin-bottom:8px}
+      .tato-copy p.secondary{display:none}
+      .tato-chat-cta{grid-column:1/-1;min-height:66px;margin-top:10px;padding:12px 14px}
+      .tato-chat-cta strong{font-size:16px}
+      .contact-actions{grid-template-columns:1fr 1fr;padding:0 18px 14px;gap:9px}
+      .contact-action{min-height:84px}
+      .contact-action.availability{min-height:76px;padding:15px 16px}
+      .contact-action.availability strong{font-size:18px}
+      .contact-footer{padding:0 18px 16px;font-size:10px}
+      .chat-window{right:0;bottom:0;width:100%;height:100dvh;max-height:none;border-radius:0;border-left:0;border-right:0;border-bottom:0}
+      .chat-backdrop{display:none}
+    }
 
     /* Verifica disponibilità */
     .availability-backdrop{position:absolute;inset:0;z-index:42;background:rgba(0,0,0,.68);backdrop-filter:blur(9px);opacity:0;visibility:hidden;transition:.25s ease}
@@ -121,25 +217,50 @@ padding:16px 16px 100px;
   <div class="splash" id="splash"><div class="splash-card"><div class="splash-logo"><div>W</div></div><h1>Wedding Tattoo Experience</h1><p>Love. Marked. Forever.</p><button class="enter-btn" id="enterBtn">Entra nel Wedding Book</button></div></div>
   <div class="tap-hint" id="tapHint">Tocca per mostrare i comandi</div>
 
-  <button class="contact-fab" id="contactFab" aria-label="Parla con Tato"><span class="tato-label">Chiedi a Tato</span><span class="dot" aria-hidden="true"></span><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="M8 9h8M8 13h5"/></svg></button>
-  <div class="contact-panel" id="contactPanel" aria-hidden="true">
-    <div class="contact-head"><strong>Contattaci subito</strong><button class="contact-close" id="contactClose" aria-label="Chiudi">×</button></div>
-    <div class="contact-actions">
-      <button class="contact-action primary" id="openChat" type="button"><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg><span><strong>Chatta con l’assistente</strong><br><small>Risposte immediate 24/7</small></span></button>
+  <button class="contact-fab" id="contactFab" aria-label="Apri il concierge Tato">
+    <span class="dot" aria-hidden="true"></span>
+    <img src="tato-avatar.jpg" alt="">
+  </button>
 
-      <button class="contact-action primary" id="openAvailability" type="button">
-        <svg viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 8h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1z"/><path d="m9 14 2 2 4-4"/></svg>
-        <span><strong>Verifica disponibilità</strong><br><small>Invia la data del matrimonio</small></span>
-      </button>
-      <a class="contact-action" href="https://wa.me/393477050250?text=Buongiorno%2C%20vorrei%20ricevere%20informazioni%20sul%20servizio%20Wedding%20Tattoo%20Experience." target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M20 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-4.2A8.5 8.5 0 1 1 20 11.5z"/><path d="M8.5 8.5c.5 3 2 4.5 5 5"/></svg>WhatsApp</a>
-      <a class="contact-action" href="tel:+39011232456"><svg viewBox="0 0 24 24"><path d="M4 4h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2C9 21 3 15 2 6a2 2 0 0 1 2-2z"/></svg>Chiama</a>
-      <a class="contact-action" href="https://www.instagram.com/tattoo.beautycondove/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/></svg>Instagram</a>
-      <a class="contact-action" href="https://www.google.com/maps/search/?api=1&query=Tattoo%20Beauty%20Saloon%20Via%20Torino%201A%2010055%20Condove%20TO" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/></svg>Indicazioni</a>
+  <div class="contact-panel" id="contactPanel" aria-hidden="true">
+    <div class="contact-card" role="dialog" aria-modal="true" aria-label="Contattaci e parla con Tato">
+      <div class="contact-head">
+        <strong>Contattaci subito</strong>
+        <button class="contact-close" id="contactClose" aria-label="Chiudi">×</button>
+      </div>
+
+      <div class="tato-hero">
+        <div class="tato-portrait">
+          <img src="tato-avatar.jpg" alt="Tato, concierge digitale Wedding Tattoo Experience">
+        </div>
+        <div class="tato-copy">
+          <h2>Ciao, sono Tato 👋</h2>
+          <div class="tato-role">Il concierge digitale di Wedding Tattoo Experience</div>
+          <p>Sono qui 24 ore su 24 per aiutarti a capire come funziona il servizio, scegliere il pacchetto più adatto e orientarti nella verifica della tua data.</p>
+          <p class="secondary">Se la tua richiesta richiede un preventivo personalizzato o una conferma definitiva, ti metterò direttamente in contatto con Elvis e il nostro team.</p>
+          <button class="tato-chat-cta" id="openChat" type="button">
+            <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="M8 9h8M8 13h5"/></svg>
+            <span><strong>PARLA CON TATO</strong><small>Risponde subito, 24/7</small></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="contact-actions">
+        <button class="contact-action availability" id="openAvailability" type="button">
+          <svg viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 8h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1z"/><path d="m9 14 2 2 4-4"/></svg>
+          <span><strong>Verifica disponibilità</strong><br><small>Inviaci la data del matrimonio</small></span>
+        </button>
+        <a class="contact-action" href="https://wa.me/393477050250?text=Buongiorno%2C%20vorrei%20ricevere%20informazioni%20sul%20servizio%20Wedding%20Tattoo%20Experience." target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M20 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-4.2A8.5 8.5 0 1 1 20 11.5z"/><path d="M8.5 8.5c.5 3 2 4.5 5 5"/></svg><strong>WhatsApp</strong><small>Scrivici ora</small></a>
+        <a class="contact-action" href="tel:+393477050250"><svg viewBox="0 0 24 24"><path d="M4 4h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2C9 21 3 15 2 6a2 2 0 0 1 2-2z"/></svg><strong>Chiama</strong><small>Parliamo subito</small></a>
+        <a class="contact-action" href="https://www.instagram.com/tattoo.beautysalooncondove/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/></svg><strong>Instagram</strong><small>Seguici</small></a>
+        <a class="contact-action" href="https://www.google.com/maps/search/?api=1&query=Tattoo%20Beauty%20Saloon%20Via%20Torino%201A%2010055%20Condove%20TO" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/></svg><strong>Indicazioni</strong><small>Raggiungici</small></a>
+      </div>
+      <div class="contact-footer">♡ &nbsp; Love. Marked. Forever. &nbsp; ♡</div>
     </div>
   </div>
   <div class="chat-backdrop" id="chatBackdrop"></div>
   <section class="chat-window" id="chatWindow" role="dialog" aria-modal="true" aria-label="Tato, concierge digitale Wedding Tattoo Experience">
-    <header class="chat-header"><div class="chat-title"><div class="chat-avatar"><span>T</span></div><div><strong>Tato</strong><small>Concierge digitale · sempre sveglio</small></div></div><button class="chat-x" id="chatClose" aria-label="Chiudi chat">×</button></header>
+    <header class="chat-header"><div class="chat-title"><div class="chat-avatar"><img src="tato-avatar.jpg" alt=""></div><div><strong>Tato</strong><small>Concierge digitale · sempre sveglio</small></div></div><button class="chat-x" id="chatClose" aria-label="Chiudi chat">×</button></header>
     <div class="chat-messages" id="chatMessages"><div class="msg bot">Ciao! Io sono Tato 👋 Il concierge digitale di Wedding Tattoo Experience. Posso spiegarti come funziona il servizio, aiutarti a scegliere il pacchetto e rispondere alle curiosità. Promesso: non tatuo nessuno attraverso lo schermo 😄</div></div>
     <div class="quick-replies" id="quickReplies">
       <button class="quick" type="button">Come funziona?</button>
@@ -208,7 +329,7 @@ localStorage.setItem('tato_session_id',tatoSessionId);
 function toggleContact(force){const open=typeof force==='boolean'?force:!contactPanel.classList.contains('open');contactPanel.classList.toggle('open',open);contactPanel.setAttribute('aria-hidden',String(!open))}
 function openChatWindow(){toggleContact(false);chatWindow.classList.add('open');chatBackdrop.classList.add('open');setTimeout(()=>chatInput.focus(),180)}
 function closeChatWindow(){chatWindow.classList.remove('open');chatBackdrop.classList.remove('open')}
-contactFab.onclick=()=>toggleContact();contactClose.onclick=()=>toggleContact(false);openChatBtn.onclick=openChatWindow;chatClose.onclick=closeChatWindow;chatBackdrop.onclick=closeChatWindow;
+contactFab.onclick=()=>toggleContact();contactClose.onclick=()=>toggleContact(false);openChatBtn.onclick=openChatWindow;contactPanel.addEventListener('click',e=>{if(e.target===contactPanel)toggleContact(false)});chatClose.onclick=closeChatWindow;chatBackdrop.onclick=closeChatWindow;
 document.addEventListener('click',e=>{if(contactPanel.classList.contains('open')&&!contactPanel.contains(e.target)&&!contactFab.contains(e.target))toggleContact(false)});
 function appendMessage(text,who,extra=''){const d=document.createElement('div');d.className=`msg ${who} ${extra}`.trim();d.textContent=text;chatMessages.appendChild(d);chatMessages.scrollTop=chatMessages.scrollHeight;return d}
 async function askAssistant(message){appendMessage(message,'user');chatHistory.push({role:'user',content:message});chatInput.value='';chatSend.disabled=true;const typing=appendMessage('Cerco la risposta più adatta…','bot','typing');try{const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,history:chatHistory.slice(-10),sessionId:tatoSessionId,page:current+1})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||'Servizio temporaneamente non disponibile');typing.remove();const reply=data.reply||'Questa domanda merita una risposta precisa: la giro volentieri allo staff.';appendMessage(reply,'bot');chatHistory.push({role:'assistant',content:reply})}catch(err){typing.remove();const d=appendMessage('Ops, mi si è annodato un filo digitale 😅 Puoi riprovare oppure contattarci subito su WhatsApp.','bot');const h=document.createElement('div');h.className='handoff';h.innerHTML='<a href="https://wa.me/393477050250?text=Buongiorno%2C%20vorrei%20informazioni%20sul%20Wedding%20Tattoo%20Experience." target="_blank" rel="noopener">WhatsApp</a><a href="tel:+39011232456">Chiama</a>';d.appendChild(h)}finally{chatSend.disabled=false;chatInput.focus()}}
