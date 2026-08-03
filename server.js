@@ -40,6 +40,13 @@ const publicLimiter=rateLimit({
 });
 app.use("/api/proposals",publicLimiter);
 
+const tatoLimiter=rateLimit({
+  windowMs:10*60*1000,
+  max:35,
+  standardHeaders:true,
+  legacyHeaders:false
+});
+
 function text(value,max=500){
   return String(value??"").trim().slice(0,max);
 }
@@ -123,6 +130,18 @@ async function initDb(){
       ON proposals(updated_at DESC);
     CREATE INDEX IF NOT EXISTS idx_proposals_status
       ON proposals(status);
+
+    CREATE TABLE IF NOT EXISTS tato_conversations (
+      id BIGSERIAL PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      user_message TEXT NOT NULL,
+      assistant_reply TEXT NOT NULL,
+      page_number INTEGER,
+      needs_human BOOLEAN NOT NULL DEFAULT FALSE
+    );
+    CREATE INDEX IF NOT EXISTS idx_tato_session
+      ON tato_conversations(session_id,created_at DESC);
   `);
 }
 
@@ -206,6 +225,146 @@ function rowToProposal(row){
     history:Array.isArray(row.history)?row.history:[]
   };
 }
+
+
+const TATO_KNOWLEDGE=`
+WEDDING TATTOO EXPERIENCE
+- Servizio professionale di tatuaggi dal vivo durante matrimoni ed eventi.
+- Solo persone maggiorenni possono tatuarsi.
+- Sono esclusi viso, testa, collo, mani e dita.
+- Non promettere mai la disponibilità di una data: deve verificarla lo staff.
+- Non inventare prezzi, sconti, acconti, chilometri inclusi o condizioni.
+- Per un preventivo preciso invita a usare il configuratore "Scopri i pacchetti".
+- I tatuaggi sono piccoli, rapidi e scelti tra flash adatti all'evento.
+- In media il configuratore stima circa 3 tatuaggi l'ora, ma è una previsione.
+- Il servizio comprende allestimento professionale, materiali, assistenza e aftercare secondo il pacchetto.
+- Igiene e sicurezza sono prioritarie; per questioni mediche specifiche indirizza a un professionista sanitario e allo staff.
+- Contatti ufficiali: WhatsApp +39 347 705 0250; Tattoo Beauty Saloon, Via Torino 1A, Condove (TO).
+`;
+
+const TATO_INSTRUCTIONS=`
+Sei Tato, il concierge digitale di Wedding Tattoo Experience.
+Parli sempre in italiano, salvo richiesta esplicita in altra lingua.
+
+PERSONALITÀ
+- Amichevole, simpatico, elegante e rassicurante.
+- Puoi usare una battuta leggera ogni tanto, mai in ogni risposta.
+- Non essere infantile, invadente o insistente.
+- Risposte brevi e facili da leggere, generalmente 2-6 frasi.
+- Presentati come assistente digitale, mai come persona reale.
+
+REGOLE IMPORTANTI
+- Usa soltanto le informazioni fornite nel contesto del servizio.
+- Non inventare prezzi, disponibilità, regole, condizioni o promesse.
+- Non confermare date e non concludere contratti.
+- Per preventivi definitivi, disponibilità, modifiche o decisioni di Elvis, passa allo staff.
+- Non chiedere dati sanitari o dettagli sensibili.
+- Se l'utente dichiara di essere minorenne, spiega gentilmente che il servizio tattoo è solo per maggiorenni.
+- Se la domanda è medica o legale, dai solo informazioni generali e invita a rivolgersi a un professionista.
+- Se l'utente vuole parlare con lo staff, indica WhatsApp +39 347 705 0250.
+- Se chiede prezzi, spiega che dipendono da distanza, ore e configurazione e invitalo al configuratore.
+- Se chiede "fa male?", rispondi con tono rassicurante: i flash sono piccoli e rapidi, la percezione è soggettiva.
+- Se chiede qualcosa fuori tema, rispondi con simpatia e riporta la conversazione al matrimonio o al servizio.
+
+CONTESTO DEL SERVIZIO:
+${TATO_KNOWLEDGE}
+`;
+
+function cleanChatHistory(history){
+  if(!Array.isArray(history)) return [];
+  return history.slice(-10).map(item=>({
+    role:item?.role==="assistant"?"assistant":"user",
+    content:String(item?.content||"").slice(0,1200)
+  })).filter(item=>item.content.trim());
+}
+
+function needsHumanHandoff(message,reply){
+  const source=`${message} ${reply}`.toLowerCase();
+  return [
+    "disponibilità","bloccare la data","confermare la data","parlare con elvis",
+    "contratto","sconto","prezzo definitivo","preventivo definitivo","reclamo"
+  ].some(term=>source.includes(term));
+}
+
+app.post("/api/chat",tatoLimiter,async(req,res,next)=>{
+  try{
+    const message=text(req.body?.message,1200);
+    const sessionId=text(req.body?.sessionId,100)||crypto.randomUUID();
+    const pageNumber=number(req.body?.page,1,100);
+    const history=cleanChatHistory(req.body?.history);
+
+    if(!message){
+      return res.status(400).json({error:"Scrivi una domanda per Tato."});
+    }
+
+    if(!process.env.OPENAI_API_KEY){
+      return res.status(503).json({
+        error:"Assistente momentaneamente non configurato."
+      });
+    }
+
+    const response=await fetch("https://api.openai.com/v1/responses",{
+      method:"POST",
+      headers:{
+        "Authorization":`Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        model:process.env.TATO_MODEL||"gpt-5-mini",
+        instructions:TATO_INSTRUCTIONS,
+        input:[
+          ...history.map(item=>({
+            role:item.role,
+            content:[{type:"input_text",text:item.content}]
+          })),
+          {
+            role:"user",
+            content:[{
+              type:"input_text",
+              text:`Pagina catalogo visualizzata: ${pageNumber}. Domanda: ${message}`
+            }]
+          }
+        ],
+        max_output_tokens:420
+      }),
+      signal:AbortSignal.timeout(25000)
+    });
+
+    const data=await response.json().catch(()=>({}));
+
+    if(!response.ok){
+      console.error("OpenAI API error:",data);
+      return res.status(502).json({error:"Tato è momentaneamente impegnato."});
+    }
+
+    const reply=text(data.output_text,3000)||
+      "Questa domanda merita una risposta precisa: preferisco passarla allo staff.";
+
+    const handoff=needsHumanHandoff(message,reply);
+
+    await pool.query(`
+      INSERT INTO tato_conversations(
+        session_id,user_message,assistant_reply,page_number,needs_human
+      ) VALUES($1,$2,$3,$4,$5)
+    `,[sessionId,message,reply,pageNumber,handoff]);
+
+    res.json({
+      reply,
+      handoff,
+      whatsapp:handoff
+        ?"https://wa.me/393477050250?text="+encodeURIComponent(
+          `Ciao, ho parlato con Tato e vorrei assistenza sulla mia richiesta: ${message}`
+        )
+        :null
+    });
+  }catch(error){
+    if(error?.name==="TimeoutError"){
+      return res.status(504).json({error:"Tato ci sta mettendo troppo. Riprova tra poco."});
+    }
+    next(error);
+  }
+});
+
 
 app.post("/api/proposals",async(req,res,next)=>{
   try{
