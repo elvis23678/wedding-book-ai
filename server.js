@@ -384,8 +384,23 @@ app.get("/api/health",async(req,res)=>{
   res.json({ok:true,database:true,time:result.rows[0].now});
 });
 
+
+// Pannello amministrativo protetto.
+// Percorsi disponibili:
+//   /crm
+//   /archivio
+//   /crm-proposte.html
+app.get(["/crm","/archivio"],adminAuth,(req,res)=>{
+  res.sendFile(path.join(__dirname,"crm-proposte.html"));
+});
+
+app.get("/crm-proposte.html",adminAuth,(req,res)=>{
+  res.sendFile(path.join(__dirname,"crm-proposte.html"));
+});
+
 app.use(express.static(__dirname,{
   extensions:["html"],
+  index:"index.html",
   maxAge:process.env.NODE_ENV==="production"?"1h":0
 }));
 
