@@ -52,8 +52,13 @@ display:flex;
 flex-direction:column;
 z-index:43;
 background:linear-gradient(180deg,rgba(15,13,9,.995),rgba(3,3,3,.995));
+opacity:0;
+visibility:hidden;
+pointer-events:none;
+transform:translateY(18px);
+transition:opacity .25s ease,visibility .25s ease,transform .25s ease;
 }
-    .availability-modal.open{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+    .availability-modal.open{opacity:1;visibility:visible;pointer-events:auto;transform:none}
     .availability-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 14px;border-bottom:1px solid rgba(201,154,54,.18)}
     .availability-head strong{font-family:Georgia,serif;color:var(--gold2);font-size:20px;font-weight:400}
     .availability-close{width:38px;height:38px;border-radius:50%;border:1px solid rgba(201,154,54,.28);background:transparent;color:var(--gold2);font-size:22px;cursor:pointer}
